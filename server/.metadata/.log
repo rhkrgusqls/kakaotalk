@@ -11,3 +11,99 @@ Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.e
 
 !ENTRY ch.qos.logback.classic 1 0 2025-07-15 15:04:16.979
 !MESSAGE Logback config file: C:\workspace\KDT\kakaotalk\server\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
+!SESSION 2025-07-15 16:44:39.612 -----------------------------------------------
+eclipse.buildId=4.33.0.20240905-0613
+java.version=21.0.7
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:44:41.950
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:44:45.352
+!MESSAGE Logback config file: C:\workspace\KDT\kakaotalk\server\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
+
+!ENTRY org.eclipse.rse.core 1 0 2025-07-15 16:47:27.071
+!MESSAGE Saved passwords are not available for migration to secure storage. Deprecated authorization classes (org.eclipse.core.runtime.compatibility.auth) are not installed.
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:38.446
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:41.013
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:41.240
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:47.624
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:47.859
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:47:48.020
+!MESSAGE RSEG1066
+!SESSION 2025-07-15 16:53:28.659 -----------------------------------------------
+eclipse.buildId=4.33.0.20240905-0613
+java.version=21.0.7
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product -data file:/C:/workspace/KDT/kakaotalk/server/
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:53:30.196
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:53:31.071
+!MESSAGE Logback config file: C:\workspace\KDT\kakaotalk\server\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
+!SESSION 2025-07-15 16:54:21.857 -----------------------------------------------
+eclipse.buildId=4.33.0.20240905-0613
+java.version=21.0.7
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product -data file:/C:/workspace/KDT/kakaotalk/server/
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:54:23.928
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 16:54:24.873
+!MESSAGE Logback config file: C:\workspace\KDT\kakaotalk\server\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
+
+!ENTRY org.eclipse.rse.core 1 0 2025-07-15 16:55:08.714
+!MESSAGE Saved passwords are not available for migration to secure storage. Deprecated authorization classes (org.eclipse.core.runtime.compatibility.auth) are not installed.
+
+!ENTRY org.eclipse.jsch.core 4 0 2025-07-15 16:55:08.758
+!MESSAGE An error occurred loading the SSH2 private keys
+!STACK 0
+com.jcraft.jsch.JSchException: invalid privatekey: [B@28f376a3
+	at com.jcraft.jsch.KeyPair.load(KeyPair.java:664)
+	at com.jcraft.jsch.KeyPair.load(KeyPair.java:561)
+	at com.jcraft.jsch.IdentityFile.newInstance(IdentityFile.java:40)
+	at com.jcraft.jsch.JSch.addIdentity(JSch.java:406)
+	at com.jcraft.jsch.JSch.addIdentity(JSch.java:366)
+	at org.eclipse.jsch.internal.core.Utils.loadPrivateKeys(Utils.java:108)
+	at org.eclipse.jsch.internal.core.JSchCorePlugin.loadPrivateKeys(JSchCorePlugin.java:226)
+	at org.eclipse.jsch.internal.core.JSchProvider.createSession(JSchProvider.java:46)
+	at org.eclipse.rse.internal.connectorservice.ssh.SshConnectorService.createSession(SshConnectorService.java:109)
+	at org.eclipse.rse.internal.connectorservice.ssh.SshConnectorService.internalConnect(SshConnectorService.java:179)
+	at org.eclipse.rse.core.subsystems.AbstractConnectorService$1.run(AbstractConnectorService.java:500)
+	at org.eclipse.rse.core.subsystems.AbstractConnectorService$SafeRunner.run(AbstractConnectorService.java:444)
+	at org.eclipse.rse.core.subsystems.AbstractConnectorService.connect(AbstractConnectorService.java:506)
+	at org.eclipse.rse.ui.operations.SystemFetchOperation.ensureConnected(SystemFetchOperation.java:309)
+	at org.eclipse.rse.ui.operations.SystemFetchOperation.execute(SystemFetchOperation.java:373)
+	at org.eclipse.rse.ui.operations.SystemFetchOperation.run(SystemFetchOperation.java:182)
+	at org.eclipse.rse.ui.view.AbstractSystemViewAdapter.fetchDeferredChildren(AbstractSystemViewAdapter.java:2290)
+	at org.eclipse.ui.progress.DeferredTreeContentManager$1.run(DeferredTreeContentManager.java:215)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:55:08.927
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:55:09.116
+!MESSAGE RSEG1066
+
+!ENTRY org.eclipse.rse.ui 4 0 2025-07-15 16:55:09.311
+!MESSAGE RSEG1066
