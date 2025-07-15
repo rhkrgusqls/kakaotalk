@@ -1,0 +1,7 @@
+package model;
+
+public class DBManagerModule {
+	public static String getDB() {
+		return new String("DB");
+	}
+}
