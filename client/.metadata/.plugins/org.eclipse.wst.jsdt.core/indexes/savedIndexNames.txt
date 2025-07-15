@@ -1,0 +1,7 @@
+INDEX VERSION 1.4+C:\workspace\KDT\kakaotalk\client\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+3854209257.index
+509837308.index
+2882637589.index
+175482732.index
+563809043.index
+262142283.index

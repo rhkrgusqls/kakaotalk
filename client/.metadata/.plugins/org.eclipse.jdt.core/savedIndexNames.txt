@@ -1,0 +1,3 @@
+INDEX VERSION 1.134+C:\workspace\KDT\kakaotalk\client\.metadata\.plugins\org.eclipse.jdt.core
+3413270776.index
+262142283.index

@@ -1,0 +1,13 @@
+!SESSION 2025-07-15 15:04:05.094 -----------------------------------------------
+eclipse.buildId=4.33.0.20240905-0613
+java.version=21.0.7
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 15:04:07.635
+!MESSAGE Activated before the state location was initialized. Retry after the state location is initialized.
+
+!ENTRY ch.qos.logback.classic 1 0 2025-07-15 15:04:16.979
+!MESSAGE Logback config file: C:\workspace\KDT\kakaotalk\server\.metadata\.plugins\org.eclipse.m2e.logback\logback.2.6.1.20240411-1122.xml
