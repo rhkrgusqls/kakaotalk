@@ -30,6 +30,16 @@ public class mainController {
 
 	    return builder.toString();
 	}
+	
+	public static String login(String id, String password) {
+		return "";
+	}
+	
+	public static boolean isregistered(String phoneNum) {
+		return true;
+	}
+	
+	public static boolean register(String phoneNum) {
+		return true;
+	}
 }
-
-
