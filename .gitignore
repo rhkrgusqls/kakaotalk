@@ -1,20 +1,23 @@
-# 무시할 메타데이터 디렉터리
+# Eclipse 전체 워크스페이스 메타데이터는 무시 (절대 Git에 포함시키지 않음)
 client/.metadata/
 server/.metadata/
 
-# .metadata 하위의 플러그인과 캐시 파일도 무시
-**/.metadata/
-**/.metadata/.plugins/
-**/.metadata/.plugins/**
-
-# 캐시 및 인덱스 관련 파일 무시
+# .metadata 하위의 플러그인 및 로그, 캐시 파일 무시
 *.snap
 *.markers
 *.index
 *.dat
+*.log
 externalLibsTimeStamps
 savedIndexNames.txt
 variablesAndContainers.dat
-server/.metadata/.plugins/org.eclipse.m2e.logback/0.log
-server/.metadata/.plugins/org.eclipse.rse.core/.log
-server/.metadata/.plugins/org.eclipse.rse.ui/.log
+
+# 특수 로그 파일 (이미 위 *.log로 커버됨, 명시적으로 남기고 싶다면 유지)
+# server/.metadata/.plugins/org.eclipse.m2e.logback/0.log
+# server/.metadata/.plugins/org.eclipse.rse.core/.log
+# server/.metadata/.plugins/org.eclipse.rse.ui/.log
+
+# 개별 프로젝트 설정 파일은 포함시키기
+!.project
+!.classpath
+!.settings/
