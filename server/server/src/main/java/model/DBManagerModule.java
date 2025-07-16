@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.*;
 public class DBManagerModule {
     
@@ -191,5 +192,40 @@ public class DBManagerModule {
         }
         return null;
     }
+    
+    /**
+     * 두 사용자 간의 친구 관계를 설정
+     * @param user1 첫 번째 사용자 ID
+     * @param user2 두 번째 사용자 ID
+     * @return 성공 여부
+     */
+    public boolean setFriendData(String user1, String user2) {
+        // 순서 관계 없이 양방향 친구 관계가 존재하는지 확인하고, 없으면 추가
+        String sql = "INSERT INTO FriendList (userId1, userId2) VALUES (?, ?)";
 
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // 항상 user1 < user2 순서로 저장 (중복 방지)
+            if (user1.compareTo(user2) > 0) {
+                String temp = user1;
+                user1 = user2;
+                user2 = temp;
+            }
+
+            stmt.setString(1, user1);
+            stmt.setString(2, user2);
+            stmt.executeUpdate();
+            return true;
+
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // 이미 친구일 경우 무시
+            System.out.println("Already friends: " + e.getMessage());
+            return false;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
