@@ -1,5 +1,7 @@
 package view;
 
+import model.DBManagerModule;
+
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
@@ -8,6 +10,8 @@ import java.awt.Color;
 // 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
+	//DB 객체 필드선언
+	private DBManagerModule db;
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
@@ -26,6 +30,8 @@ public class LoginFrame extends JFrame{
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
 
+		this.db = new DBManagerModule();
+		
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());
 		this.getContentPane().setBackground(Color.YELLOW); // 현재 프레임 색상 YELLOW
@@ -87,6 +93,20 @@ public class LoginFrame extends JFrame{
 		loginVerify.setContentAreaFilled(true);
 		loginVerify.setBorderPainted(true); // 테두리 감추기 
 		loginVerify.setMaximumSize(new Dimension(240, 35));
+		loginVerify.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시
+				String id = inputId.getText();
+				String pw = inputPw.getText();
+				boolean isUserId = db.isRegisteredUser(id);
+				if(isUserId) {
+					new Base();
+				} else {
+					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
+//					new SignUpFrame(); // 로그인실패시 회원가입 프레임 창으로 넘어감  
+				}
+			}
+		});
 		autoLogin = new JCheckBox("자동 로그인");
 		autoLogin.setOpaque(false);
 		autoLogin.setContentAreaFilled(false);

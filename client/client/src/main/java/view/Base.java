@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 
-public class Base extends JFrame{
+public class Base extends JFrame implements ActionListener{
 	private static final long serialVersionUID = 1L;
 	 // 상단
 	private JPanel top;
@@ -38,6 +38,7 @@ public class Base extends JFrame{
 	JButton friendBtn;
 	JButton chatBtn;
 	JButton alarm; // boolean 값으로 설정 @@@@@@@@@@@@@@@@@@@@@@@@
+	boolean alarmON = true;
 //	JButton alarmOFF;
 	JButton setting;
 	
@@ -85,6 +86,20 @@ public class Base extends JFrame{
 		friendBtn = new JButton("친구목록");
 		chatBtn = new JButton("채팅목록");
 		alarm = new JButton("알람");
+		alarm.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				alarmON = !alarmON;
+				
+				if(alarmON) {
+					JOptionPane.showMessageDialog(null, "알람이 활성화 되었습니다.");
+				} else {
+					JOptionPane.showMessageDialog(null, "알람이 비활성화 되었습니다.");
+				}
+				
+			}
+			
+		});
 //		alarmOFF = new JButton("알람off");
 		setting = new JButton("설정");
 		
@@ -141,6 +156,12 @@ public class Base extends JFrame{
 	
 	public static void main(String[] args) {
 		new Base();
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		
+		
 	}
 
 }
