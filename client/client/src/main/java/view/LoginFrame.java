@@ -5,7 +5,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.awt.Color;
-
+// 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
 	private JPanel top; // 상단
@@ -92,6 +92,7 @@ public class LoginFrame extends JFrame{
 		autoLogin.setContentAreaFilled(false);
 		autoLogin.setBorderPainted(false);
 		autoLogin.setMaximumSize(new Dimension(240, 25));
+		
 		inputId.setAlignmentX(Component.CENTER_ALIGNMENT);
 		middle.add(Box.createRigidArea(new Dimension(0, 10)));
 		middle.add(inputId);
@@ -118,7 +119,7 @@ public class LoginFrame extends JFrame{
 		this.add(bottom, BorderLayout.SOUTH);
 
 		this.pack();
-		this.setLocationRelativeTo(null);
+		this.setLocation(1000, 200);
 		this.setSize(400, 650);
 		this.setVisible(true);
 		/*------------------------------------------------------------------------------------*/
