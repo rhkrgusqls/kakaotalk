@@ -1,4 +1,4 @@
-package controller;
+package clientcontroller;
 
 public class MainController {
 	public boolean connectTCP() {

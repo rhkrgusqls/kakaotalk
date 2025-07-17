@@ -1,4 +1,4 @@
-package model;
+package clientmodel;
 
 public class TCPManager {
 	public void connect() {}
