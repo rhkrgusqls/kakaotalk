@@ -34,7 +34,7 @@ public class LoginFrame extends JFrame{
 		
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());
-		this.getContentPane().setBackground(Color.YELLOW); // 현재 프레임 색상 YELLOW
+		this.getContentPane().setBackground(new Color(0xFEE500)); // 현재 프레임 색상 YELLOW
 		// 최상단 부분 ( 삭제, 트레이 최소화 )
 		top = new JPanel();
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -69,7 +69,7 @@ public class LoginFrame extends JFrame{
 		this.add(top, BorderLayout.NORTH);
 		/*------------------------------------------------------------------------------------*/
 		middle = new JPanel();
-		middle.setBackground(Color.YELLOW);
+		middle.setBackground(new Color(0xFEE500));
 		middle.setLayout(new BoxLayout(middle, BoxLayout.Y_AXIS));
 		// 카카오톡 로고 
 		imageIcon = new ImageIcon("image/KakaoTalk_logo151.png");
@@ -86,8 +86,9 @@ public class LoginFrame extends JFrame{
 		inputPw = new JTextField("비밀번호");
 		inputPw.setMaximumSize(new Dimension(240, 35));
 		loginVerify = new JButton("로그인");
-		Color brownColor = new Color(108, 60, 12);
-		loginVerify.setBackground(brownColor);
+		//Color brownColor = new Color(108, 60, 12);new Color(0xFEE500)
+		//loginVerify.setBackground(brownColor);
+		loginVerify.setBackground(new Color(0x423630));
 		loginVerify.setForeground(Color. WHITE);
 		loginVerify.setOpaque(true);
 		loginVerify.setContentAreaFilled(true);
@@ -130,7 +131,7 @@ public class LoginFrame extends JFrame{
 		
 		/*------------------------------------------------------------------------------------*/
 		bottom = new JPanel();
-		bottom.setBackground(Color.YELLOW);
+		bottom.setBackground(new Color(0xFEE500));
 		resetPw = new JButton("비밀번호 재설정");
 		resetPw.setOpaque(false);
 		resetPw.setContentAreaFilled(false);
