@@ -167,24 +167,35 @@ public class DBManagerModule {
 		}
      */
     
-    /**
-     * 사용자 ID(String)로 이름과 프로필 경로를 불러온다
-     * @param userId
-     * @return UserData 객체 (id, name, profileDir 포함), 존재하지 않으면 null
-     */
-    public UserData getUserDataById(String userId) {
-        String sql = "SELECT id, name, profileDir FROM UserData WHERE id = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+    public UserData getUserDataById(String id) {
+        String userSql = "SELECT id, name, profileDir FROM UserData WHERE id = ?";
+        String anonSql = "SELECT anonymousId AS id, nickName AS name, profileDir FROM AnonymousUserData WHERE anonymousId = ?";
+        try (Connection conn = getConnection()) {
 
-            stmt.setString(1, userId);
-            ResultSet rs = stmt.executeQuery();
+            try (PreparedStatement userStmt = conn.prepareStatement(userSql)) {
+                userStmt.setString(1, id);
+                ResultSet userRs = userStmt.executeQuery();
 
-            if (rs.next()) {
-                String id = rs.getString("id");
-                String name = rs.getString("name");
-                String profileDir = rs.getString("profileDir");
-                return new UserData(id, name, profileDir);
+                if (userRs.next()) {
+                    return new UserData(
+                        userRs.getString("id"),
+                        userRs.getString("name"),
+                        userRs.getString("profileDir")
+                    );
+                }
+            }
+
+            try (PreparedStatement anonStmt = conn.prepareStatement(anonSql)) {
+                anonStmt.setString(1, id);
+                ResultSet anonRs = anonStmt.executeQuery();
+
+                if (anonRs.next()) {
+                    return new UserData(
+                        anonRs.getString("id"),
+                        anonRs.getString("name"),
+                        anonRs.getString("profileDir")
+                    );
+                }
             }
 
         } catch (Exception e) {
@@ -192,29 +203,28 @@ public class DBManagerModule {
         }
         return null;
     }
+
     
     /**
-     * 두 사용자 간의 친구 관계를 설정
-     * @param user1 첫 번째 사용자 ID
-     * @param user2 두 번째 사용자 ID
+     * 두 전화번호 간의 친구 관계 설정 (중복 방지 포함)
+     * @param phone1 첫 번째 사용자 전화번호
+     * @param phone2 두 번째 사용자 전화번호
      * @return 성공 여부
      */
-    public boolean setFriendData(String user1, String user2) {
-        // 순서 관계 없이 양방향 친구 관계가 존재하는지 확인하고, 없으면 추가
-        String sql = "INSERT INTO FriendList (userId1, userId2) VALUES (?, ?)";
-
+    public boolean setFriendData(String phone1, String phone2) {
+        String sql = "INSERT INTO FriendList (userPhone1, userPhone2) VALUES (?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            // 항상 user1 < user2 순서로 저장 (중복 방지)
-            if (user1.compareTo(user2) > 0) {
-                String temp = user1;
-                user1 = user2;
-                user2 = temp;
+            // 항상 phone1 < phone2 순서로 저장
+            if (phone1.compareTo(phone2) > 0) {
+                String temp = phone1;
+                phone1 = phone2;
+                phone2 = temp;
             }
 
-            stmt.setString(1, user1);
-            stmt.setString(2, user2);
+            stmt.setString(1, phone1);
+            stmt.setString(2, phone2);
             stmt.executeUpdate();
             return true;
 
@@ -228,6 +238,7 @@ public class DBManagerModule {
             return false;
         }
     }
+
     
     public List<ChatRoomData> loadChatRoom(String id) {
         List<ChatRoomData> roomList = new ArrayList<>();
@@ -257,6 +268,7 @@ public class DBManagerModule {
 
         return roomList;
     }
+    
     public String getIdByPhoneNum(String phoneNum) {
         String sql = "SELECT id FROM UserData WHERE phoneNum = ?";
         
@@ -276,7 +288,31 @@ public class DBManagerModule {
         
         return null;
     }
-    public void getChatData(int ChatRoomData) {
-    	
+    
+    public List<ChatData> getChatData(int chatRoomNum) {
+        List<ChatData> chatList = new ArrayList<>();
+        String sql = "SELECT * FROM ChatList WHERE chatRoomNum = ? ORDER BY time ASC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, chatRoomNum);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ChatData chat = new ChatData();
+                chat.setChatIndex(rs.getInt("chatIndex"));
+                chat.setChatRoomNum(rs.getInt("chatRoomNum"));
+                chat.setText(rs.getString("text"));
+                chat.setUserId(rs.getString("userId"));
+                chat.setTime(rs.getTimestamp("time"));
+                chatList.add(chat);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return chatList;
     }
 }
