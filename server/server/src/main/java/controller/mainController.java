@@ -41,7 +41,7 @@ public class mainController {
 	    if(db.login(id, password)) {
 	        UserData user = db.getUserDataById(id);
 	        builder.append("&UserName$").append(user.name)
-	               .append("&friendProfile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
+	               .append("&Profile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
 	    }
 	    else{
 	        builder.append("Error:Login Failed");
@@ -56,7 +56,7 @@ public class mainController {
 	        UserData user = db.getUserDataById(db.getIdByPhoneNum(phoneNum));
 	        builder.append("%Login%")
 	               .append("&UserName$").append(user.name)
-	               .append("&friendProfile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
+	               .append("&Profile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
 	    }
 	    else{
 	        builder.append("%Login%Error:Login Failed");

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import controller.ParsingController;
 
 public class TestTCPServer {
 	public static void main(String[] args) throws IOException {
@@ -23,13 +24,15 @@ public class TestTCPServer {
 					//TODO : EX) response = ParsingController.opcode(input); // 바로반환해주는게 아니고 메서드를 걸쳐서 response에 담고 넘어가는
 					//sender는 진짜 send만 한다.
 					String response;
+					response = ParsingController.controllerHandle(inputLine);
+					/*
 					if(inputLine.startsWith("C1")) {
 						response = "S1 반환";
 					} else if(inputLine.startsWith("C2")) {
 						response = "S2 사용자 정보";
 					} else {
 						response = "알수없는 명령어";
-					}
+					}*/
 					out.println(response);
 					System.out.println("클라이언트로 보냄: :" + response);
 				}
