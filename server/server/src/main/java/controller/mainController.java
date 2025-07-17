@@ -1,9 +1,11 @@
 package controller;
 
+import java.util.List;
+
 import model.DBManagerModule;
 import model.UserData;
-import java.util.List;
 import model.ChatRoomData;
+import model.ChatData;
 
 public class mainController {
 
@@ -79,7 +81,23 @@ public class mainController {
 	}
 	
 	public static String loadChatData(String chatRoom) {
-		return "is called";
+	    int roomNum = Integer.parseInt(chatRoom);
+	    DBManagerModule db = new DBManagerModule();
+	    List<ChatData> chats = db.getChatData(roomNum);
+
+	    StringBuilder builder = new StringBuilder();
+	    builder.append("%LoadChatData%");
+
+	    for (ChatData chat : chats) {
+	        builder.append("&chatIndex$").append(chat.getChatIndex())
+	               .append("&chatRoomNum$").append(chat.getChatRoomNum())
+	               .append("&text$").append(chat.getText())
+	               .append("&userId$").append(chat.getUserId())
+	               .append("&time$").append(chat.getTime());
+	    }
+
+	    builder.append("%");
+	    return builder.toString();
 	}
 	
     public static String loadChatRoomData(String id) {
