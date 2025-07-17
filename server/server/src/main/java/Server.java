@@ -1,20 +1,16 @@
 import observer.ChatGroup;
 import console.ObserverConsole;
-
+import controller.ParsingController;
 public class Server {
     public static void main(String[] args) {
-        ChatGroup chatGroup = new ChatGroup();
+        String testInput1 = "%Login%&id$user1&password$pass1%user1";
+        String testInput2 = "%AddFriend%&phoneNum$01012345678&phoneNum$01099993333%user1";
+        String testInput3 = "%SendMsg%&name$Hello&name$World%user1";
+        String testInput4 = "%Unknown%&id$abc%user2";
 
-        ObserverConsole console = new ObserverConsole(chatGroup);
-
-        console.addObserver("ahnys2024@daum.net");
-        console.addObserver("choijh555@outlook.com");
-
-        chatGroup.notifyGroup("1", "Hello Room 1!");
-        console.addObserver("hwangsj99@gmail.com");
-        console.addObserver("unknown");
-        console.addObserver("choijh555@outlook.com");
-        chatGroup.notifyGroup("1", "Hello Room 2!");
-        chatGroup.notifyGroup("2", "Hello Room 3!");
+        ParsingController.controllerHandle(testInput1);
+        ParsingController.controllerHandle(testInput2);
+        ParsingController.controllerHandle(testInput3);
+        ParsingController.controllerHandle(testInput4);
     }
 }

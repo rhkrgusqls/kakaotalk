@@ -15,11 +15,11 @@ public class MainController {
 			System.out.println("서버 연결 실패");
 			return;
 		}
-		String response1 = TCPManager.getInstance().sendSyncMessage("C1:로그인요청");
+		String response1 = TCPManager.getInstance().sendSyncMessage("%Login%&id$ahnys2024@daum.net&password$pwtest12%");
 		System.out.println("C1에 대한 서버 응답 :" + response1);
-		
+		/*
 		String response2 = TCPManager.getInstance().sendSyncMessage("C2:사용자정보요청");
-		System.out.println("C2에 대한 서버 응답 :" + response2);
+		System.out.println("C2에 대한 서버 응답 :" + response2);*/
 		
 		TCPManager.getInstance().disconnect();
 	}
