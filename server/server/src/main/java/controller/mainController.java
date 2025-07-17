@@ -7,6 +7,10 @@ import model.UserData;
 import model.ChatRoomData;
 import model.ChatData;
 
+/**
+ * ToDo:인코딩문자열통일할것
+ */
+
 public class mainController {
 
 	/**

@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.awt.Color;
+import java.awt.geom.RoundRectangle2D;
 // 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
@@ -143,6 +144,7 @@ public class LoginFrame extends JFrame{
 		this.setLocation(1000, 200);
 		this.setSize(400, 650);
 		this.setVisible(true);
+		this.setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 13, 13));
 		/*------------------------------------------------------------------------------------*/
 
 	}
