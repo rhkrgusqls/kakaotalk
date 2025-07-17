@@ -228,4 +228,55 @@ public class DBManagerModule {
             return false;
         }
     }
+    
+    public List<ChatRoomData> loadChatRoom(String id) {
+        List<ChatRoomData> roomList = new ArrayList<>();
+        String sql = "SELECT cr.chatRoomNum, cr.roomType, cr.roomName " +
+                     "FROM ChatRoomList cr " +
+                     "JOIN ChatRoomMember rm ON cr.chatRoomNum = rm.chatRoomNum " +
+                     "WHERE rm.id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                int num = rs.getInt("chatRoomNum");
+                String type = rs.getString("roomType");
+                String name = rs.getString("roomName");
+
+                ChatRoomData room = new ChatRoomData(num, type, name);
+                roomList.add(room);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return roomList;
+    }
+    public String getIdByPhoneNum(String phoneNum) {
+        String sql = "SELECT id FROM UserData WHERE phoneNum = ?";
+        
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, phoneNum);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getString("id");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    public void getChatData(int ChatRoomData) {
+    	
+    }
 }
