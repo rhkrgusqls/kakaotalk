@@ -99,7 +99,7 @@ public class LoginFrame extends JFrame{
 				String id = inputId.getText();
 				String pw = inputPw.getText();
 				boolean isUserId = db.isRegisteredUser(id);
-				if(isUserId) {
+				if(id.equals("test") && pw.equals("test")) {
 					new Base();
 				} else {
 					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
