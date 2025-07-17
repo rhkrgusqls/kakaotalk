@@ -1,6 +1,6 @@
 package view;
 
-import model.DBManagerModule;
+import model.DBManager;
 
 import java.awt.*;
 import javax.swing.*;
@@ -11,7 +11,7 @@ import java.awt.Color;
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
 	//DB 객체 필드선언
-	private DBManagerModule db;
+	private DBManager db;
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
@@ -30,7 +30,7 @@ public class LoginFrame extends JFrame{
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
 
-		this.db = new DBManagerModule();
+		this.db = new DBManager();
 		
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());
@@ -98,7 +98,7 @@ public class LoginFrame extends JFrame{
 				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시
 				String id = inputId.getText();
 				String pw = inputPw.getText();
-				boolean isUserId = db.isRegisteredUser(id);
+//				boolean isUserId = db.isRegisteredUser(id);@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 				if(id.equals("test") && pw.equals("test")) {
 					new Base();
 				} else {

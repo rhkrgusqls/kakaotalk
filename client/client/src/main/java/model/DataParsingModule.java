@@ -1,4 +1,4 @@
-package clientmodel;
+package model;
 
 public class DataParsingModule {
 	public static String incodingData() {

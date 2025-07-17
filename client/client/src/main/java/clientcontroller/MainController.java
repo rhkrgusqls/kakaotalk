@@ -1,6 +1,6 @@
 package clientcontroller;
 
-import clientmodel.TCPManager;
+import model.TCPManager;
 
 public class MainController {
 	

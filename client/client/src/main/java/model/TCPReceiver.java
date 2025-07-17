@@ -1,4 +1,4 @@
-package clientmodel;
+package model;
 
 import clientcontroller.MainController;
 import java.io.BufferedReader;
