@@ -20,7 +20,7 @@ public class TestTCPServer {
 				String inputLine;
 				while((inputLine = in.readLine()) != null) {
 					System.out.println("클라이언트에게 받은 메시지 : " + inputLine );
-					//TODO : response = ParsingController.opcode(input); // 바로반환해주는게 아니고 메서드를 걸쳐서 response에 담고 넘어가는
+					//TODO : EX) response = ParsingController.opcode(input); // 바로반환해주는게 아니고 메서드를 걸쳐서 response에 담고 넘어가는
 					//sender는 진짜 send만 한다.
 					String response;
 					if(inputLine.startsWith("C1")) {
