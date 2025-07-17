@@ -2,12 +2,14 @@ package controller;
 
 import model.DBManagerModule;
 import model.UserData;
+import java.util.List;
+import model.ChatRoomData;
 
 public class mainController {
 
 	/**
 	 * 사용자 전화번호로 친구 목록을 문자열로 반환
-	 * 포맷: &friendIndex$0&friendId$abc123&friendName$김철수&friendProfile$Base64...&friendIndex$1...
+	 * 포맷: %LoadFriendData%&friendId$abc123&friendName$김철수&friendProfile$Base64...&....
 	 * @param userPhoneNum 사용자 전화번호
 	 * @return 문자열 포맷 결과
 	 */
@@ -17,29 +19,80 @@ public class mainController {
 	    if (friendIds == null || friendIds.length == 0) return "";
 
 	    StringBuilder builder = new StringBuilder();
-
+        builder.append("%LoadFriendData%");
 	    for (int i = 0; i < friendIds.length; i++) {
 	        UserData user = db.getUserDataById(friendIds[i]);
 	        if (user == null) continue;
 
-	        builder.append("&friendIndex$").append(i)
-	               .append("&friendId$").append(friendIds[i])
+	        builder.append("&friendId$").append(friendIds[i])
 	               .append("&friendName$").append(user.name)
 	               .append("&friendProfile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
 	    }
-
+        builder.append("%");
 	    return builder.toString();
 	}
 	
 	public static String login(String id, String password) {
-		return "";
+	    DBManagerModule db = new DBManagerModule();
+	    StringBuilder builder = new StringBuilder();
+        builder.append("%Login%");
+	    if(db.login(id, password)) {
+	        UserData user = db.getUserDataById(id);
+	        builder.append("&UserName$").append(user.name)
+	               .append("&friendProfile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
+	    }
+	    else{
+	        builder.append("Error:Login Failed");
+	    }
+        builder.append("%");
+		return builder.toString();
+	}
+	public static String login(String phoneNum) {
+	    DBManagerModule db = new DBManagerModule();
+	    StringBuilder builder = new StringBuilder();
+	    if(db.login(phoneNum)) {
+	        UserData user = db.getUserDataById(db.getIdByPhoneNum(phoneNum));
+	        builder.append("%Login%")
+	               .append("&UserName$").append(user.name)
+	               .append("&friendProfile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
+	    }
+	    else{
+	        builder.append("%Login%Error:Login Failed");
+	    }
+        builder.append("%");
+		return builder.toString();
+	}
+	public static String isregistered(String phoneNum) {
+	    DBManagerModule db = new DBManagerModule();
+		if(db.isRegisteredUser(phoneNum)) {
+			return "%CheckRegistered%&isRegistered$true";
+		}
+		return "%CheckRegistered%&isRegistered$false";
 	}
 	
-	public static boolean isregistered(String phoneNum) {
-		return true;
+	public static String register(String id, String password, String name, String profileDir, String phoneNum) {
+	    DBManagerModule db = new DBManagerModule();
+		if(db.isRegisteredUser(phoneNum)) {
+			return "%Register%&success$true";
+		}
+		return "%Register%&success$false";
 	}
 	
-	public static boolean register(String phoneNum) {
-		return true;
+	public static String loadChatData(String chatRoom) {
+		return "is called";
 	}
+	
+    public static String loadChatRoomData(String id) {
+        DBManagerModule db = new DBManagerModule();
+        List<ChatRoomData> rooms = db.loadChatRoom(id);
+        StringBuilder builder = new StringBuilder();
+        builder.append("%LoadChatRoomData%");
+        for (ChatRoomData room : rooms) {
+            builder.append("&chatRoomNum$").append(room.chatRoomNum)
+                   .append("&roomType$").append(room.roomType)
+                   .append("&roomName$").append(room.roomName);
+        }
+        builder.append("%");
+        return builder.toString();
+    }
 }

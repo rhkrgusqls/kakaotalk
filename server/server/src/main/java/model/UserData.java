@@ -5,7 +5,7 @@ import java.nio.file.Paths;
 import java.util.Base64;
 
 public class UserData {
-    public String id;           // User ID as String
+    public String id;
     public String name;
     public String profileDir;
     private byte[] profileImage;
