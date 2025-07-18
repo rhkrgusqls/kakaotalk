@@ -14,25 +14,27 @@ public class Base extends JFrame implements ActionListener{
 	
 	// 베이스 패널
 	JPanel basePanel; 
-	JButton searchBtn;
-	JButton addFriendsBtn;
-	JLabel myPf;
-	private ImageIcon imageIcon; // 이미지  
-	private JLabel myPfImage; // 프로필 이미지
+	
+	// REVIEW : 친구창을 다른 클래스에서 정의 검토 필요
+	//JButton searchBtn;
+	//JButton addFriendsBtn;
+	//JLabel myPf;
+	//private ImageIcon imageIcon; // 이미지  
+	//private JLabel myPfImage; // 프로필 이미지
 	
 //	JList  birthdayList;
 //	JLabel birthdayPf; // 생일자 라벨
 	
-	JList friendList; // 친구리스트
+	//JList friendList; // 친구리스트
 //	JLabel friendPf; // 친구들 프로필은 각각 생성이 필요
 	
 	
 	// 채팅창 패널
-	JPanel chatPanel; 
-	JList chatList; // 채팅방 리스트
+	///JPanel chatPanel; 
+	//JList chatList; // 채팅방 리스트
 	
-	JButton openChatSearchBtn; // 검색과 오픈채팅 버튼의 기능에대해 생각할것 
-	JButton makeChatBtn;
+	//JButton openChatSearchBtn; // 검색과 오픈채팅 버튼의 기능에대해 생각할것 
+	//JButton makeChatBtn;
 	
 	// 왼쪽 패널
 	JPanel leftPanel;
@@ -43,50 +45,118 @@ public class Base extends JFrame implements ActionListener{
 //	JButton alarmOFF;
 	JButton setting;
 	
+	FriendPanel friendPanel;
+	ChatRoomPanel chatRoomPanel;
+	
 	public Base() {
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());
 		this.setLocation(1000, 200);
 		this.setLayout(new BorderLayout());
 		// 최상단 hide, exit 
-		top = new JPanel();
+		top = new JPanel() {
+		    @Override
+		    protected void paintComponent(Graphics g) {
+		        super.paintComponent(g);
+		        int width = getWidth();
+		        int height = getHeight();
+		        
+		        Graphics2D g2 = (Graphics2D) g;
+		        g2.setColor(new Color(0xECECED));
+		        g2.fillRect(0, 0, 65, height);
+		        
+		        g2.setColor(Color.white);
+		        g2.fillRect(65, 0, width - 10, height);
+		    }
+		};
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		top.setOpaque(false);
-		exit = new JButton("X");
-		exit.setFont(new Font("Arial", Font.BOLD, 20));
+		top.setPreferredSize(new Dimension(0, 23));
+		ImageIcon exListIcon = new ImageIcon("./image/exit.png");
+		Image scaledexListImg = exListIcon.getImage().getScaledInstance(12, 12, Image.SCALE_SMOOTH);
+		exit = new JButton(new ImageIcon(scaledexListImg));
+		exit.setFont(new Font("Arial", Font.BOLD, 10));
 		exit.setOpaque(false);
 		exit.setContentAreaFilled(false);
 		exit.setBorderPainted(false);
-		exit.setPreferredSize(new Dimension(50, 50));
+		exit.setPreferredSize(new Dimension(20, 20));
+		exit.setMargin(new Insets(0, 0, 0, 0));
 		exit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);
 			}
 		});
-		hide = new JButton("_");
+		ImageIcon mnListIcon = new ImageIcon("./image/minimize.png");
+		Image scaledmnListImg = mnListIcon.getImage().getScaledInstance(12, 1, Image.SCALE_SMOOTH);
+		hide = new JButton(new ImageIcon(scaledmnListImg));
 		hide.setFont(new Font("Arial", Font.BOLD, 20));
+		hide.setFocusPainted(false);
 		hide.setOpaque(false);
 		hide.setContentAreaFilled(false);
 		hide.setBorderPainted(false);
-		hide.setPreferredSize(new Dimension(50, 50));
+		hide.setPreferredSize(new Dimension(20, 20));
+		hide.setMargin(new Insets(0, 0, 0, 0));
 		hide.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setState(JFrame.ICONIFIED);
 			}
 		});
+		ImageIcon mxListIcon = new ImageIcon("./image/maximize.png");
+		Image scaledmxListImg = mxListIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
+		
 		top.add(hide);
 		top.add(exit);
 		
 		this.add(top, BorderLayout.NORTH);
 		
-		//왼쪽 패널
+		int buttonHeight = 10;
+		
 		leftPanel = new JPanel();
-		leftPanel.setLayout(new GridLayout(5, 1));
-		leftPanel.setPreferredSize(new Dimension(65, getHeight())); 
-		friendBtn = new JButton("친구목록");
-		chatBtn = new JButton("채팅목록");
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		leftPanel.setBackground(new Color(0xECECED));
+		leftPanel.setPreferredSize(new Dimension(65, getHeight()));
+		
+		int topButtonHeight = 3500;
+		int bottomButtonHeight = 30;
+		
+		ImageIcon freiendListIcon = new ImageIcon("./image/friendList_icon.png");
+		Image scaledfreiendListImg = freiendListIcon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
+		friendBtn = new JButton(new ImageIcon(scaledfreiendListImg));
+		friendBtn.setMaximumSize(new Dimension(65, topButtonHeight));
+		friendBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		friendBtn.setPreferredSize(new Dimension(friendBtn.getPreferredSize().width, buttonHeight));
+		friendBtn.setBackground(new Color(0xECECED));
+		friendBtn.setBorderPainted(false);
+		friendBtn.setContentAreaFilled(false);
+		friendBtn.setOpaque(true);
+		friendBtn.setFocusPainted(false);   
+		friendBtn.setMargin(new Insets(0, 0, 0, 0));
+		friendBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switchingPanel(0);
+			}
+		});
+		ImageIcon chatListIcon = new ImageIcon("./image/chatLogo.png");
+		Image scaledchatListImg = chatListIcon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
+		chatBtn = new JButton(new ImageIcon(scaledchatListImg));
+		chatBtn.setMaximumSize(new Dimension(65, topButtonHeight));
+		chatBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		chatBtn.setPreferredSize(new Dimension(chatBtn.getPreferredSize().width, buttonHeight));
+		chatBtn.setBackground(new Color(0xECECED));
+		chatBtn.setBorderPainted(false);
+		chatBtn.setContentAreaFilled(false);
+		chatBtn.setOpaque(true);
+		chatBtn.setFocusPainted(false);
+		chatBtn.setMargin(new Insets(0, 0, 0, 0));
+		chatBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switchingPanel(1);
+			}
+		});
 		alarm = new JButton("알람");
 		alarm.addActionListener(new ActionListener() {
 			@Override
@@ -103,22 +173,33 @@ public class Base extends JFrame implements ActionListener{
 			
 		});
 //		alarmOFF = new JButton("알람off");
+		alarm = new JButton("알람");
+		alarm.setMaximumSize(new Dimension(65, bottomButtonHeight));
+		alarm.setAlignmentX(Component.CENTER_ALIGNMENT);
+		
 		setting = new JButton("설정");
+		setting.setMaximumSize(new Dimension(65, bottomButtonHeight));
+		setting.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
+		Component verticalGlue = Box.createVerticalGlue();
+		
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 		leftPanel.add(friendBtn);
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		leftPanel.add(chatBtn);
+		leftPanel.add(verticalGlue);
 		leftPanel.add(alarm);
-//		leftPanel.add(alarmOFF);
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		leftPanel.add(setting);
-		
 		this.add(leftPanel, BorderLayout.WEST);
 
 		
 		// 베이스 패널
 		basePanel = new JPanel();
 		basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
-		basePanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
-		
+		basePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+		basePanel.setBackground(new Color(0xFFFFFF));
+		/*
 		// 검색 친구 추가 최상단 패널
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchBtn = new JButton("검색");
@@ -148,6 +229,9 @@ public class Base extends JFrame implements ActionListener{
 		friendPanel.add(new JLabel("친구"), BorderLayout.NORTH);
 		friendPanel.add(new JScrollPane(friendList), BorderLayout.CENTER);
 		basePanel.add(friendPanel);
+		*/
+
+		switchingPanel(0); //화면전환 메서드 디폴트값 출력
 		
 		this.add(basePanel, BorderLayout.CENTER);
 		
@@ -165,6 +249,27 @@ public class Base extends JFrame implements ActionListener{
 	public void actionPerformed(ActionEvent e) {
 		
 		
+	}
+	
+	/**
+	 * 화면전환용 메서드
+	 */
+	private void switchingPanel(int type) {
+		basePanel.removeAll();
+		switch(type) {
+		case 0:
+			friendPanel = new FriendPanel();
+			basePanel.add(friendPanel); //친구창 붙여넣기
+			basePanel.revalidate();
+			basePanel.repaint();
+			break;
+		case 1:
+			chatRoomPanel = new ChatRoomPanel();
+			basePanel.add(chatRoomPanel); 
+			basePanel.revalidate();
+			basePanel.repaint();
+			break;
+		}
 	}
 
 }
