@@ -1,5 +1,6 @@
 package model;
 
+import controller.MainController;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -23,6 +24,8 @@ public class TCPManager {
 	private TCPSender sender;
 	private TCPReceiver receiver;
 	
+	private MainController mainController;
+	
 	private PrintWriter out;
 	private BufferedReader in;
 	
@@ -32,13 +35,13 @@ public class TCPManager {
 	private final int serverPort = 9002;
 	private boolean isConnected = false;
 	
-	public void connect() {
+	public void connect(MainController controller) {
 		if(isConnected) {
 			System.out.println("현재 서버와 연결되어 있음");
 			return;
 		}
-		
 		try {
+			this.mainController = controller; // 전달받은 컨트롤를 멤버 변수에 저장
 			System.out.println("서버 연결 중...("+serverIp + ":" + serverPort + ")");
 			socket = new Socket(serverIp, serverPort);
 			
@@ -46,10 +49,10 @@ public class TCPManager {
 			this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			
 			sender = new TCPSender(socket);
-			receiver = new TCPReceiver(socket);
+			receiver = new TCPReceiver(socket, controller);
 			
 			sender.start();
-//			receiver.start();
+			receiver.start();
 			
 			isConnected = true;
 			System.out.println("연결 성공");
@@ -123,7 +126,11 @@ public class TCPManager {
 		if(!isConnected()) {
 			System.out.println("재연결중...");
 			disconnect();
-			connect();
+			if(this.mainController != null) {
+				connect(this.mainController);
+			} else {
+				System.out.println("재연결 실패");
+			}
 		}
 	}
 	//스레드 분기 리시버랑 샌더를 생성 디스커넥트랑 통신상태 체크 후 재접속
