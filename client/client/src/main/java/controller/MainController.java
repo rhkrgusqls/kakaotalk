@@ -21,9 +21,9 @@ public class MainController {
 		}
 		
 		//서버가 메시지를 보낼때까지 기다리기
-		System.out.println("3초 여유 대기 시간...");
+		System.out.println("4초 여유 대기 시간...");
 		try {
-			Thread.sleep(3000);
+			Thread.sleep(4000);
 		}catch(InterruptedException e) {
 			e.printStackTrace();
 		}

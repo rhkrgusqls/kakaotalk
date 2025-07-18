@@ -117,4 +117,23 @@ public class mainController {
         builder.append("%");
         return builder.toString();
     }
+    /**
+     * 클라이언트가 보낸 채팅 메시지를 DB에 저장합니다.
+     * @param chatRoomNum 채팅방 번호
+     * @param userId 메시지를 보낸 사용자 ID
+     * @param text 채팅 내용
+     */
+    public static void saveChatMessage(String chatRoomNum, String userId, String text) {
+        // DB 작업을 위해 DBManagerModule 객체를 생성합니다.
+        DBManagerModule db = new DBManagerModule();
+        
+        // DBManagerModule의 insertChatData 메서드를 호출하여 DB에 저장합니다.
+        // String을 int로 변환해줍니다.
+        try {
+            int roomNum = Integer.parseInt(chatRoomNum);
+            db.insertChatData(roomNum, userId, text);
+        } catch (NumberFormatException e) {
+            System.err.println("채팅방 번호 변환 오류: " + chatRoomNum);
+        }
+    }
 }
