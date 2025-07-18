@@ -8,6 +8,7 @@ import java.io.File;
 import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
 
+
 import controller.MainController;
 // 123123 
 public class LoginFrame extends JFrame{
@@ -21,7 +22,7 @@ public class LoginFrame extends JFrame{
 	private ImageIcon imageIcon; // 이미지  
 	private JLabel imageLabel; // 이미지 라벨
 	private JTextField inputId;
-	private JTextField inputPw;
+	private JPasswordField inputPw;
 	private JButton loginVerify;
 	private JCheckBox autoLogin;
 	
@@ -79,10 +80,55 @@ public class LoginFrame extends JFrame{
 		middle.add(Box.createRigidArea(new Dimension(0, 10))); // 10px 세로 간격
 		middle.setBorder(BorderFactory.createEmptyBorder(20 , 80, 20, 80));
 		// id, pw 텍스트 필드 및 로그인 버튼
-		inputId = new JTextField("아이디");
+		inputId = new JTextField();
+		inputId.setForeground(Color.GRAY);
+		inputId.setText("아이디");
+
+		inputId.addFocusListener(new FocusAdapter() {
+		    @Override
+		    public void focusGained(FocusEvent e) {
+		        if (inputId.getText().equals("아이디")) {
+		            inputId.setText("");
+		            inputId.setForeground(Color.BLACK);
+		        }
+		    }
+
+		    @Override
+		    public void focusLost(FocusEvent e) {
+		        if (inputId.getText().isEmpty()) {
+		            inputId.setForeground(Color.GRAY);
+		            inputId.setText("아이디");
+		        }
+		    }
+		});
 		inputId.setMaximumSize(new Dimension(240, 35));
 //		inputId.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-		inputPw = new JTextField("비밀번호");
+		inputPw = new JPasswordField();
+		inputPw.setEchoChar((char) 0); // 힌트일 땐 평문
+		inputPw.setText("비밀번호");
+		inputPw.setForeground(Color.GRAY);
+
+		inputPw.addFocusListener(new FocusAdapter() {
+		    @Override
+		    public void focusGained(FocusEvent e) {
+		        if (String.valueOf(inputPw.getPassword()).equals("비밀번호")) {
+		            inputPw.setText("");
+		            inputPw.setEchoChar('●'); // 입력 시 비밀번호 모양으로 변경
+		            inputPw.setForeground(Color.BLACK);
+		        }
+		    }
+
+		    @Override
+		    public void focusLost(FocusEvent e) {
+		        if (inputPw.getPassword().length == 0) {
+		            inputPw.setEchoChar((char) 0); // 힌트 보이게
+		            inputPw.setText("비밀번호");
+		            inputPw.setForeground(Color.GRAY);
+		        }
+		    }
+		});
+
+
 		inputPw.setMaximumSize(new Dimension(240, 35));
 		loginVerify = new JButton("로그인");
 		//Color brownColor = new Color(108, 60, 12);new Color(0xFEE500)
@@ -100,7 +146,9 @@ public class LoginFrame extends JFrame{
 				String pw = inputPw.getText();
 //				boolean isUserId = db.isRegisteredUser(id);@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 				if(MainController.login(id, pw)) {
-					new Base();
+				    dispose();
+				    JFrame newFrame = new Base();
+				    newFrame.setVisible(true);
 				} else {
 					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
 //					new SignUpFrame(); // 로그인실패시 회원가입 프레임 창으로 넘어감  
