@@ -2,6 +2,7 @@ package view;
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
+import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 
 public class Base extends JFrame implements ActionListener{
@@ -83,6 +84,7 @@ public class Base extends JFrame implements ActionListener{
 		//왼쪽 패널
 		leftPanel = new JPanel();
 		leftPanel.setLayout(new GridLayout(5, 1));
+		leftPanel.setPreferredSize(new Dimension(65, getHeight())); 
 		friendBtn = new JButton("친구목록");
 		chatBtn = new JButton("채팅목록");
 		alarm = new JButton("알람");
@@ -151,6 +153,7 @@ public class Base extends JFrame implements ActionListener{
 		
 		
 		this.setSize(400, 650);
+		this.setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 13, 13));
 		this.setVisible(true);
 	}
 	

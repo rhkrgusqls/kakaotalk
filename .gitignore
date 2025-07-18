@@ -1,6 +1,8 @@
 # Eclipse 전체 워크스페이스 메타데이터는 무시 (절대 Git에 포함시키지 않음)
 client/.metadata/
 server/.metadata/
+client/client/build/
+server/server/build/
 .metadata/
 # .metadata 하위의 플러그인 및 로그, 캐시 파일 무시
 *.snap
@@ -8,6 +10,7 @@ server/.metadata/
 *.index
 *.dat
 *.log
+*.class
 externalLibsTimeStamps
 savedIndexNames.txt
 variablesAndContainers.dat
