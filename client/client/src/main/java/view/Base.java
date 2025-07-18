@@ -113,14 +113,19 @@ public class Base extends JFrame implements ActionListener{
 		
 		int buttonHeight = 10;
 		
-		//왼쪽 패널
 		leftPanel = new JPanel();
-		leftPanel.setLayout(new GridLayout(5, 1));
-		leftPanel.setPreferredSize(new Dimension(65, getHeight())); 
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		leftPanel.setBackground(new Color(0xECECED));
+		leftPanel.setPreferredSize(new Dimension(65, getHeight()));
+		
+		int topButtonHeight = 3500;
+		int bottomButtonHeight = 30;
 		
 		ImageIcon freiendListIcon = new ImageIcon("./image/friendList_icon.png");
-		Image scaledfreiendListImg = freiendListIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
+		Image scaledfreiendListImg = freiendListIcon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
 		friendBtn = new JButton(new ImageIcon(scaledfreiendListImg));
+		friendBtn.setMaximumSize(new Dimension(65, topButtonHeight));
+		friendBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 		friendBtn.setPreferredSize(new Dimension(friendBtn.getPreferredSize().width, buttonHeight));
 		friendBtn.setBackground(new Color(0xECECED));
 		friendBtn.setBorderPainted(false);
@@ -134,7 +139,18 @@ public class Base extends JFrame implements ActionListener{
 				switchingPanel(0);
 			}
 		});
-		chatBtn = new JButton("채팅목록");
+		ImageIcon chatListIcon = new ImageIcon("./image/chatLogo.png");
+		Image scaledchatListImg = chatListIcon.getImage().getScaledInstance(22, 22, Image.SCALE_SMOOTH);
+		chatBtn = new JButton(new ImageIcon(scaledchatListImg));
+		chatBtn.setMaximumSize(new Dimension(65, topButtonHeight));
+		chatBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		chatBtn.setPreferredSize(new Dimension(chatBtn.getPreferredSize().width, buttonHeight));
+		chatBtn.setBackground(new Color(0xECECED));
+		chatBtn.setBorderPainted(false);
+		chatBtn.setContentAreaFilled(false);
+		chatBtn.setOpaque(true);
+		chatBtn.setFocusPainted(false);
+		chatBtn.setMargin(new Insets(0, 0, 0, 0));
 		chatBtn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -157,17 +173,23 @@ public class Base extends JFrame implements ActionListener{
 			
 		});
 //		alarmOFF = new JButton("알람off");
+		alarm = new JButton("알람");
+		alarm.setMaximumSize(new Dimension(65, bottomButtonHeight));
+		alarm.setAlignmentX(Component.CENTER_ALIGNMENT);
+		
 		setting = new JButton("설정");
+		setting.setMaximumSize(new Dimension(65, bottomButtonHeight));
+		setting.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
-
+		Component verticalGlue = Box.createVerticalGlue();
 		
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 4)));
 		leftPanel.add(friendBtn);
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		leftPanel.add(chatBtn);
-		
-		leftPanel.add(Box.createVerticalGlue());
-		
+		leftPanel.add(verticalGlue);
 		leftPanel.add(alarm);
-//		leftPanel.add(alarmOFF);
+		leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 		leftPanel.add(setting);
 		this.add(leftPanel, BorderLayout.WEST);
 

@@ -1,11 +1,14 @@
 package view;
 
 import java.awt.*;
+
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
 import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
+
+import controller.MainController;
 // 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
@@ -92,11 +95,11 @@ public class LoginFrame extends JFrame{
 		loginVerify.setMaximumSize(new Dimension(240, 35));
 		loginVerify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시
+				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시				
 				String id = inputId.getText();
 				String pw = inputPw.getText();
 //				boolean isUserId = db.isRegisteredUser(id);@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-				if(id.equals("test") && pw.equals("test")) {
+				if(MainController.login(id, pw)) {
 					new Base();
 				} else {
 					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
