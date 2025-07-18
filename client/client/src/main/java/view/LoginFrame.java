@@ -1,9 +1,5 @@
 package view;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 1e564fe9c9084d2c37e33a12c4e03d58825a2b19
 import java.awt.*;
 
 import javax.swing.*;
@@ -16,11 +12,9 @@ import controller.MainController;
 // 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
-<<<<<<< HEAD
 
-=======
+
 	//DB 객체 필드선언
->>>>>>> 1e564fe9c9084d2c37e33a12c4e03d58825a2b19
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
@@ -38,10 +32,6 @@ public class LoginFrame extends JFrame{
 	
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
-<<<<<<< HEAD
-
-=======
->>>>>>> 1e564fe9c9084d2c37e33a12c4e03d58825a2b19
 		
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());

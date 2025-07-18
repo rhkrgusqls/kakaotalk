@@ -13,7 +13,6 @@ public class UserManager {
     // --- 싱글턴(Singleton) 패턴 구현 ---
     // 프로그램 전체에서 단 하나의 UserManager 인스턴스만 존재하도록 보장합니다.
     private static UserManager instance = new UserManager();
-    
     private UserManager() {} // 외부에서 생성자 호출 방지
 
     public static UserManager getInstance() {
@@ -64,4 +63,12 @@ public class UserManager {
             // 여기서 보낸 사람에게 "상대방이 오프라인입니다" 라는 응답을 보내주는 로직을 추가할 수 있습니다.
         }
     }
+    
+    public ClientHandler getHandlerById(String userId) {
+        return onlineUsers.get(userId);  // ID로 소켓 핸들러 반환
+    }
+    public Map<String, ClientHandler> getAllUsers() {
+        return Collections.unmodifiableMap(onlineUsers);  // users는 사용자 리스트 Map 변수명
+    }
+
 }
