@@ -1,7 +1,5 @@
 package view;
 
-import model.DBManager;
-
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
@@ -12,7 +10,6 @@ import java.awt.geom.RoundRectangle2D;
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
 	//DB 객체 필드선언
-	private DBManager db;
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
@@ -30,8 +27,6 @@ public class LoginFrame extends JFrame{
 	
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
-
-		this.db = new DBManager();
 		
 		this.setUndecorated(true);
 		this.setLayout(new BorderLayout());

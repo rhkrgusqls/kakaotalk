@@ -15,11 +15,28 @@ public class FriendPanel extends JPanel {
 	public FriendPanel() {
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
-
+		this.setBackground(new Color(0xFFFFFF));
 		// 검색 + 친구추가 버튼 영역
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-		searchBtn = new JButton("검색");
-		addFriendsBtn = new JButton("친구추가");
+		searchPanel.setBackground(Color.white);
+		ImageIcon searchIcon = new ImageIcon("./image/search.png");
+		Image scaledSearchImg = searchIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
+		searchBtn = new JButton(new ImageIcon(scaledSearchImg));
+		searchBtn.setPreferredSize(new Dimension(30, 30));
+		searchBtn.setBackground(Color.WHITE);
+		searchBtn.setBorderPainted(false);
+		searchBtn.setContentAreaFilled(false);
+		searchBtn.setOpaque(true);
+		searchBtn.setFocusPainted(false);    
+		ImageIcon addFriendIcon = new ImageIcon("./image/addFriend.png");
+		Image scaledAddFriendImg = addFriendIcon.getImage().getScaledInstance(28, 28, Image.SCALE_SMOOTH);
+		addFriendsBtn = new JButton(new ImageIcon(scaledAddFriendImg));
+		addFriendsBtn.setPreferredSize(new Dimension(30, 30));
+		addFriendsBtn.setBackground(Color.WHITE);
+		addFriendsBtn.setBorderPainted(false);
+		addFriendsBtn.setContentAreaFilled(false);
+		addFriendsBtn.setOpaque(true);
+		addFriendsBtn.setFocusPainted(false);
 		searchPanel.add(searchBtn);
 		searchPanel.add(addFriendsBtn);
 		this.add(searchPanel);
@@ -27,6 +44,7 @@ public class FriendPanel extends JPanel {
 		// 내 프로필 영역
 		JPanel myPfPanel = new JPanel();
 		myPfPanel.setLayout(new BoxLayout(myPfPanel, BoxLayout.X_AXIS));
+		myPfPanel.setBackground(new Color(0xFFFFFF));
 		myPf = new JList();
 		JScrollPane myPfScroll = new JScrollPane(myPf);
 		myPfScroll.setPreferredSize(new Dimension(200, 60));
@@ -38,6 +56,7 @@ public class FriendPanel extends JPanel {
 
 		// 친구 리스트 영역
 		JPanel friendPanel = new JPanel(new BorderLayout());
+		friendPanel.setBackground(new Color(0xFFFFFF));
 		friendList = new JList();
 		friendPanel.add(new JLabel("친구"), BorderLayout.NORTH);
 		friendPanel.add(new JScrollPane(friendList), BorderLayout.CENTER);

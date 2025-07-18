@@ -25,16 +25,16 @@ public class Base extends JFrame implements ActionListener{
 //	JList  birthdayList;
 //	JLabel birthdayPf; // 생일자 라벨
 	
-	JList friendList; // 친구리스트
+	//JList friendList; // 친구리스트
 //	JLabel friendPf; // 친구들 프로필은 각각 생성이 필요
 	
 	
 	// 채팅창 패널
-	JPanel chatPanel; 
-	JList chatList; // 채팅방 리스트
+	///JPanel chatPanel; 
+	//JList chatList; // 채팅방 리스트
 	
-	JButton openChatSearchBtn; // 검색과 오픈채팅 버튼의 기능에대해 생각할것 
-	JButton makeChatBtn;
+	//JButton openChatSearchBtn; // 검색과 오픈채팅 버튼의 기능에대해 생각할것 
+	//JButton makeChatBtn;
 	
 	// 왼쪽 패널
 	JPanel leftPanel;
@@ -54,44 +54,93 @@ public class Base extends JFrame implements ActionListener{
 		this.setLocation(1000, 200);
 		this.setLayout(new BorderLayout());
 		// 최상단 hide, exit 
-		top = new JPanel();
+		top = new JPanel() {
+		    @Override
+		    protected void paintComponent(Graphics g) {
+		        super.paintComponent(g);
+		        int width = getWidth();
+		        int height = getHeight();
+		        
+		        Graphics2D g2 = (Graphics2D) g;
+		        g2.setColor(new Color(0xECECED));
+		        g2.fillRect(0, 0, 65, height);
+		        
+		        g2.setColor(Color.white);
+		        g2.fillRect(65, 0, width - 10, height);
+		    }
+		};
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		top.setOpaque(false);
-		exit = new JButton("X");
-		exit.setFont(new Font("Arial", Font.BOLD, 20));
+		top.setPreferredSize(new Dimension(0, 23));
+		ImageIcon exListIcon = new ImageIcon("./image/exit.png");
+		Image scaledexListImg = exListIcon.getImage().getScaledInstance(12, 12, Image.SCALE_SMOOTH);
+		exit = new JButton(new ImageIcon(scaledexListImg));
+		exit.setFont(new Font("Arial", Font.BOLD, 10));
 		exit.setOpaque(false);
 		exit.setContentAreaFilled(false);
 		exit.setBorderPainted(false);
-		exit.setPreferredSize(new Dimension(50, 50));
+		exit.setPreferredSize(new Dimension(20, 20));
+		exit.setMargin(new Insets(0, 0, 0, 0));
 		exit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);
 			}
 		});
-		hide = new JButton("_");
+		ImageIcon mnListIcon = new ImageIcon("./image/minimize.png");
+		Image scaledmnListImg = mnListIcon.getImage().getScaledInstance(12, 1, Image.SCALE_SMOOTH);
+		hide = new JButton(new ImageIcon(scaledmnListImg));
 		hide.setFont(new Font("Arial", Font.BOLD, 20));
+		hide.setFocusPainted(false);
 		hide.setOpaque(false);
 		hide.setContentAreaFilled(false);
 		hide.setBorderPainted(false);
-		hide.setPreferredSize(new Dimension(50, 50));
+		hide.setPreferredSize(new Dimension(20, 20));
+		hide.setMargin(new Insets(0, 0, 0, 0));
 		hide.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				setState(JFrame.ICONIFIED);
 			}
 		});
+		ImageIcon mxListIcon = new ImageIcon("./image/maximize.png");
+		Image scaledmxListImg = mxListIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
+		
 		top.add(hide);
 		top.add(exit);
 		
 		this.add(top, BorderLayout.NORTH);
 		
+		int buttonHeight = 10;
+		
 		//왼쪽 패널
 		leftPanel = new JPanel();
 		leftPanel.setLayout(new GridLayout(5, 1));
 		leftPanel.setPreferredSize(new Dimension(65, getHeight())); 
-		friendBtn = new JButton("친구목록");
+		
+		ImageIcon freiendListIcon = new ImageIcon("./image/friendList_icon.png");
+		Image scaledfreiendListImg = freiendListIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
+		friendBtn = new JButton(new ImageIcon(scaledfreiendListImg));
+		friendBtn.setPreferredSize(new Dimension(friendBtn.getPreferredSize().width, buttonHeight));
+		friendBtn.setBackground(new Color(0xECECED));
+		friendBtn.setBorderPainted(false);
+		friendBtn.setContentAreaFilled(false);
+		friendBtn.setOpaque(true);
+		friendBtn.setFocusPainted(false);   
+		friendBtn.setMargin(new Insets(0, 0, 0, 0));
+		friendBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switchingPanel(0);
+			}
+		});
 		chatBtn = new JButton("채팅목록");
+		chatBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switchingPanel(1);
+			}
+		});
 		alarm = new JButton("알람");
 		alarm.addActionListener(new ActionListener() {
 			@Override
@@ -110,19 +159,24 @@ public class Base extends JFrame implements ActionListener{
 //		alarmOFF = new JButton("알람off");
 		setting = new JButton("설정");
 		
+
+		
 		leftPanel.add(friendBtn);
 		leftPanel.add(chatBtn);
+		
+		leftPanel.add(Box.createVerticalGlue());
+		
 		leftPanel.add(alarm);
 //		leftPanel.add(alarmOFF);
 		leftPanel.add(setting);
-		
 		this.add(leftPanel, BorderLayout.WEST);
 
 		
 		// 베이스 패널
 		basePanel = new JPanel();
 		basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
-		basePanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+		basePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+		basePanel.setBackground(new Color(0xFFFFFF));
 		/*
 		// 검색 친구 추가 최상단 패널
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
@@ -166,8 +220,7 @@ public class Base extends JFrame implements ActionListener{
 	}
 	
 	public static void main(String[] args) {
-		Base base= new Base();
-		base.switchingPanel(1);
+		new Base();
 	}
 
 	@Override
@@ -185,10 +238,14 @@ public class Base extends JFrame implements ActionListener{
 		case 0:
 			friendPanel = new FriendPanel();
 			basePanel.add(friendPanel); //친구창 붙여넣기
+			basePanel.revalidate();
+			basePanel.repaint();
 			break;
 		case 1:
 			chatRoomPanel = new ChatRoomPanel();
 			basePanel.add(chatRoomPanel); 
+			basePanel.revalidate();
+			basePanel.repaint();
 			break;
 		}
 	}
