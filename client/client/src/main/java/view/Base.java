@@ -14,11 +14,13 @@ public class Base extends JFrame implements ActionListener{
 	
 	// 베이스 패널
 	JPanel basePanel; 
-	JButton searchBtn;
-	JButton addFriendsBtn;
-	JLabel myPf;
-	private ImageIcon imageIcon; // 이미지  
-	private JLabel myPfImage; // 프로필 이미지
+	
+	// REVIEW : 친구창을 다른 클래스에서 정의 검토 필요
+	//JButton searchBtn;
+	//JButton addFriendsBtn;
+	//JLabel myPf;
+	//private ImageIcon imageIcon; // 이미지  
+	//private JLabel myPfImage; // 프로필 이미지
 	
 //	JList  birthdayList;
 //	JLabel birthdayPf; // 생일자 라벨
@@ -42,6 +44,9 @@ public class Base extends JFrame implements ActionListener{
 	boolean alarmON = true;
 //	JButton alarmOFF;
 	JButton setting;
+	
+	FriendPanel friendPanel;
+	ChatRoomPanel chatRoomPanel;
 	
 	public Base() {
 		this.setUndecorated(true);
@@ -118,7 +123,7 @@ public class Base extends JFrame implements ActionListener{
 		basePanel = new JPanel();
 		basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
 		basePanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
-		
+		/*
 		// 검색 친구 추가 최상단 패널
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchBtn = new JButton("검색");
@@ -148,6 +153,9 @@ public class Base extends JFrame implements ActionListener{
 		friendPanel.add(new JLabel("친구"), BorderLayout.NORTH);
 		friendPanel.add(new JScrollPane(friendList), BorderLayout.CENTER);
 		basePanel.add(friendPanel);
+		*/
+
+		switchingPanel(0); //화면전환 메서드 디폴트값 출력
 		
 		this.add(basePanel, BorderLayout.CENTER);
 		
@@ -158,13 +166,31 @@ public class Base extends JFrame implements ActionListener{
 	}
 	
 	public static void main(String[] args) {
-		new Base();
+		Base base= new Base();
+		base.switchingPanel(1);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		
 		
+	}
+	
+	/**
+	 * 화면전환용 메서드
+	 */
+	private void switchingPanel(int type) {
+		basePanel.removeAll();
+		switch(type) {
+		case 0:
+			friendPanel = new FriendPanel();
+			basePanel.add(friendPanel); //친구창 붙여넣기
+			break;
+		case 1:
+			chatRoomPanel = new ChatRoomPanel();
+			basePanel.add(chatRoomPanel); 
+			break;
+		}
 	}
 
 }
