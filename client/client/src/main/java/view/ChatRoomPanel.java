@@ -86,19 +86,27 @@ public class ChatRoomPanel extends JPanel {
 	    chatWindow.setLocationRelativeTo(null);
 	    chatWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 독립된 창 닫기
 
-	    JPanel panel = new JPanel();
-	    panel.setLayout(new BorderLayout());
+	    JPanel chatingPanel = new JPanel();
+	    chatingPanel.setLayout(new BorderLayout());
 
 	    JLabel title = new JLabel(data[0], SwingConstants.CENTER);
 	    title.setFont(new Font("맑은 고딕", Font.BOLD, 18));
 
 	    JTextArea messageArea = new JTextArea("여기에 메시지가 표시됩니다...");
 	    messageArea.setEditable(false);
+	    
+	    JPanel sendPanel = new JPanel(new BorderLayout(5, 0)); // 채팅창 아래 메시지입력 후 "전송"하는 패널
+	    JTextField messageInput = new JTextField();
+	    JButton send = new JButton("전송");
+	    
+	    sendPanel.add(messageInput, BorderLayout.CENTER);
+	    sendPanel.add(send, BorderLayout.EAST);
+	    
+	    chatingPanel.add(sendPanel, BorderLayout.SOUTH);
+	    chatingPanel.add(title, BorderLayout.NORTH);
+	    chatingPanel.add(new JScrollPane(messageArea), BorderLayout.CENTER);
 
-	    panel.add(title, BorderLayout.NORTH);
-	    panel.add(new JScrollPane(messageArea), BorderLayout.CENTER);
-
-	    chatWindow.add(panel);
+	    chatWindow.add(chatingPanel);
 	    chatWindow.setVisible(true);
 	}
 
