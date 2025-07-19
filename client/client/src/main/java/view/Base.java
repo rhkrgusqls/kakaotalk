@@ -43,7 +43,6 @@ public class Base extends JFrame implements ActionListener{
 	JButton chatBtn;
 	JButton alarm; // boolean 값으로 설정 @@@@@@@@@@@@@@@@@@@@@@@@
 	boolean alarmON = true;
-//	JButton alarmOFF;
 	JButton setting;
 	
 	FriendPanel friendPanel;

@@ -2,13 +2,15 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 public class ChatRoomPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	public JButton searchBtn;
-	public JButton addFriendsBtn;
+	public JButton searchOpenChatBtn;
+	public JButton addChatRoomBtn;
 	public JList myPf;
 	public JList chatList;
 	public JTextField chatRoomSearchBar;
@@ -21,7 +23,7 @@ public class ChatRoomPanel extends JPanel {
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchPanel.setBackground(Color.white);
 		chatRoomSearchBar = new JTextField();
-		chatRoomSearchBar.setPreferredSize(new Dimension(180, 20));
+		chatRoomSearchBar.setPreferredSize(new Dimension(100, 20));
 		chatRoomSearchBar.setBackground(Color.WHITE);
 		chatRoomSearchBar.setOpaque(true);
 		chatRoomSearchBar.setHorizontalAlignment(SwingConstants.CENTER);
@@ -43,10 +45,17 @@ public class ChatRoomPanel extends JPanel {
 			//TODO 채팅방이름 입력에 따른 검색버튼입니다, 채티방이름 검색에 따른 채티방 표기 구현필요
 		});
 		searchPanel.setBackground(new Color(0xFFFFFF));
-		addFriendsBtn = new JButton("오픈채팅");
+		searchOpenChatBtn = new JButton("오픈채팅");
+		searchOpenChatBtn.addActionListener(e -> {
+		    OpenChatRoomSearchFrame openFrame = new OpenChatRoomSearchFrame();
+		    openFrame.setVisible(true);
+		});
 		searchPanel.add(searchBtn);
-		searchPanel.add(addFriendsBtn);
+		searchPanel.add(searchOpenChatBtn);
+		addChatRoomBtn = new JButton("방 생성"); // 방생성 버튼
+		searchPanel.add(addChatRoomBtn);
 		this.add(searchPanel);
+		
 		// 10개의 더미 데이터 생성
         String[][] dummyData = new String[10][3];
         for (int i = 0; i < 10; i++) {

@@ -23,7 +23,7 @@ public class FriendPanel extends JPanel {
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchPanel.setBackground(Color.white);
 		friendSearchBar = new JTextField();
-		friendSearchBar.setPreferredSize(new Dimension(200, 20));
+		friendSearchBar.setPreferredSize(new Dimension(220, 20));
 		friendSearchBar.setBackground(Color.WHITE);
 		friendSearchBar.setOpaque(true);
 		friendSearchBar.setHorizontalAlignment(SwingConstants.CENTER);
