@@ -4,15 +4,6 @@ import console.ServerTCP;
 import controller.ParsingController;
 public class Server {
     public static void main(String[] args) {
-        String testInput1 = "%Login%&id$ahnys2024@daum.net&password$pwtest12%";
-        String testInput2 = "%AddFriend%&phoneNum$01012345678&phoneNum$01099993333%user1";
-        String testInput3 = "%SendMsg%&name$Hello&name$World%user1";
-        String testInput4 = "%Unknown%&id$abc%user2";
-
-        System.out.print(ParsingController.controllerHandle(testInput1));
-        ParsingController.controllerHandle(testInput2);
-        ParsingController.controllerHandle(testInput3);
-        ParsingController.controllerHandle(testInput4);
         ServerTCP.run();
         //TCP통신 대기...
         //접속이될시! 접속이 왔을 때 매니저로 가고 그매니저 안에서 루프상태가 된다.

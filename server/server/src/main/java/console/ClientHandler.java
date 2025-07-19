@@ -33,51 +33,50 @@ public class ClientHandler extends Thread {
                 System.out.println("클라이언트(" + this.userId + " / connId:" + connectionId + ")에게 받은 메시지: " + inputLine);
                 
                 // [요구사항 반영] 이벤트 1: 클라이언트가 보낸 메시지에 "수신받음"을 더해 응답
-                out.println(inputLine + " 수신받음!");
+                System.out.println(inputLine + " 수신받음!");
                 
-                // 이후 opcode에 따른 추가 처리
-                String opcode = ParsingController.extractOpcode(inputLine);
-                Map<String, String> dataMap = ParsingController.extractDataToMap(inputLine);
-
-                switch (opcode) {
-                case "Login":
-                    // --- 테스트를 위한 임시 수정 ---
-                    // 실제 컨트롤러를 호출하는 대신, 무조건 성공 응답을 보내도록 함
-                    String tempSuccessResponse = "%Login%&Result$OK&UserName$테스트유저%";
-                    out.println(tempSuccessResponse);
-                    
-                    // 강제로 UserManager에 사용자 추가
-                    this.userId = dataMap.get("id"); // "testuser1"
-                    UserManager.getInstance().addUser(this.userId, this);
-                    System.out.println("임시 로그인 성공: " + this.userId);
-                    // --------------------------------- 임시 로직임 id
-//                    case "Login":
-//                        String response = ParsingController.controllerHandle(inputLine);
-//                        out.println(response);
-//                        if (response.contains("&UserName$")) {
-//                            UserManager.getInstance().removeUser(this.userId);
-//                            this.userId = dataMap.get("id");
-//                            UserManager.getInstance().addUser(this.userId, this);
+                String response = ParsingController.controllerHandle(inputLine);
+                out.println();
+                out.println(response);
+//                switch (opcode) {
+//                case "Login":
+//                    // --- 테스트를 위한 임시 수정 ---
+//                    // 실제 컨트롤러를 호출하는 대신, 무조건 성공 응답을 보내도록 함
+//                    String tempSuccessResponse = "%Login%&Result$OK&UserName$테스트유저%";
+//                    out.println(tempSuccessResponse);
+//                    
+//                    // 강제로 UserManager에 사용자 추가
+//                    this.userId = dataMap.get("id"); // "testuser1"
+//                    UserManager.getInstance().addUser(this.userId, this);
+//                    System.out.println("임시 로그인 성공: " + this.userId);
+//                    // --------------------------------- 임시 로직임 id
+////                    case "Login":
+////                        String response = ParsingController.controllerHandle(inputLine);
+////                        out.println(response);
+////                        if (response.contains("&UserName$")) {
+////                            UserManager.getInstance().removeUser(this.userId);
+////                            this.userId = dataMap.get("id");
+////                            UserManager.getInstance().addUser(this.userId, this);
+////                        }
+//                        break;
+//                    case "Chat":
+//                        if (this.userId.startsWith("UnknownUser")) {
+//                            out.println("%Error%&message$Login required to chat%");
+//                            break;
 //                        }
-                        break;
-                    case "Chat":
-                        if (this.userId.startsWith("UnknownUser")) {
-                            out.println("%Error%&message$Login required to chat%");
-                            break;
-                        }
-                        String recipientId = dataMap.get("recipientId");
-                        
-                        // 중복 로직 제거, sendMessageToUser 하나만 호출
-                        UserManager.getInstance().sendMessageToUser(recipientId, inputLine); 
-
-                        // String chatRoomNum = dataMap.get("chatRoomNum");
-                        // mainController.saveChatMessage(chatRoomNum, this.userId, chatText);
-                        break;
-                    default:
-                        // String defaultResponse = ParsingController.controllerHandle(inputLine);
-                        // out.println(defaultResponse);
-                        break;
-                }
+//                        String recipientId = dataMap.get("recipientId");
+//                        
+//                        // 중복 로직 제거, sendMessageToUser 하나만 호출
+//                        UserManager.getInstance().sendMessageToUser(recipientId, inputLine); 
+//
+//                        // String chatRoomNum = dataMap.get("chatRoomNum");
+//                        // mainController.saveChatMessage(chatRoomNum, this.userId, chatText);
+//                        break;
+//                    default:
+//                        // String defaultResponse = ParsingController.controllerHandle(inputLine);
+//                        // out.println(defaultResponse);
+//                        break;
+//                }
             }
         } catch (IOException e) {
             System.out.println("클라이언트(" + this.userId + ") 통신 오류: " + e.getMessage());

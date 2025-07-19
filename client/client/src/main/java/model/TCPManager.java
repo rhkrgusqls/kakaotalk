@@ -90,12 +90,12 @@ public class TCPManager {
 		}
 		try {
 			// 서버로 메시지 전송
-			System.out.println("사용자 -> 서버 : " + message);
+			System.out.println("[LOG][TCP]:동기화메시지" + message);
 			out.println(message);
 			
 			// 서버로부터 응답 대기 및 수신
 			String response = in.readLine();
-			System.out.println("사용자 <- 서버 : " + response);
+			System.out.println("[LOG][SERVERMSG]:동기화메시지" + response);
 			
 			return response; //응답 반환
 		} catch(IOException e) {

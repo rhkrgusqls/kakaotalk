@@ -10,7 +10,7 @@ public class TestTCPServer {
         try (ServerSocket serverSocket = new ServerSocket(9002)) {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                ClientHandler clientHandler = new ClientHandler(clientSocket); //클라이언트 핸들러로 다중접속할 수 있게 함
+                ClientHandler clientHandler = new ClientHandler(clientSocket, 2); //클라이언트 핸들러로 다중접속할 수 있게 함
                 clientHandler.start();
             }
         }

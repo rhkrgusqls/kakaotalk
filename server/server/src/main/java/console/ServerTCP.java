@@ -37,12 +37,12 @@ public class ServerTCP {
     }
 
     // 5초마다 로그인된 모든 사용자에게 지정된 메시지 전송
-    private static void test() {
+    private static void test() {/*
         System.out.println("[TEST] 5초마다 로그인된 사용자에게 메시지 푸시...");
         userManager.getAllUsers().forEach((userId, handler) -> {
             String dedicatedMessage = "로그인된 사용자 '" + userId + "'에게만 보내는 전용 메시지입니다.";
             handler.sendMessage(dedicatedMessage);
             System.out.println("[TEST] 보냄: " + dedicatedMessage);
-        });
+        });*/
     }
 }

@@ -56,14 +56,14 @@ public class mainController {
 	public static String login(String phoneNum) {
 	    DBManagerModule db = new DBManagerModule();
 	    StringBuilder builder = new StringBuilder();
+	    builder.append("%Login%");
 	    if(db.login(phoneNum)) {
 	        UserData user = db.getUserDataById(db.getIdByPhoneNum(phoneNum));
-	        builder.append("%Login%")
-	               .append("&UserName$").append(user.name)
+	        builder.append("&UserName$").append(user.name)
 	               .append("&Profile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
 	    }
 	    else{
-	        builder.append("%Login%Error:Login Failed");
+	        builder.append("Error:Login Failed");
 	    }
         builder.append("%");
 		return builder.toString();
