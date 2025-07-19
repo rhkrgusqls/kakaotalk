@@ -111,7 +111,7 @@ public class ChatRoomPanel extends JPanel {
 	    JPanel sendPanel = new JPanel(new BorderLayout(5, 0)); // 채팅창 아래 메시지입력 후 "전송"하는 패널
 	    JTextField messageInput = new JTextField();
 	    JButton send = new JButton("전송");
-	    
+	    //TODO : 이모티콘은 일단 제외하는 걸로 해요 
 	    sendPanel.add(messageInput, BorderLayout.CENTER);
 	    sendPanel.add(send, BorderLayout.EAST);
 	    
