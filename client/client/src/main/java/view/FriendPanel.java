@@ -54,6 +54,10 @@ public class FriendPanel extends JPanel {
 		addFriendsBtn.setContentAreaFilled(false);
 		addFriendsBtn.setOpaque(true);
 		addFriendsBtn.setFocusPainted(false);
+		addFriendsBtn.addActionListener(e -> {
+			AddFriendFrame addFriend = new AddFriendFrame();
+			addFriend.setVisible(true);
+		});
 		searchPanel.add(searchBtn);
 		searchPanel.add(addFriendsBtn);
 		this.add(searchPanel);
