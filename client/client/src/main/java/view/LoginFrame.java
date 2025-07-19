@@ -30,8 +30,8 @@ public class LoginFrame extends JFrame{
 	private JPanel bottom; // 하단
 	private JButton resetPw;
 	
-	//비밀번호 재설정에 따른 패널 
-	public JFrame resetFram;
+	//비밀번호 재설정 프레임
+	public JFrame resetFrame;
 	public JTextField id;
 	public JTextField pw;
 	public JTextField newPw;
@@ -162,6 +162,10 @@ public class LoginFrame extends JFrame{
 		resetPw.setOpaque(false);
 		resetPw.setContentAreaFilled(false);
 		resetPw.setBorderPainted(false);
+		resetPw.addActionListener(e -> {
+			ResetPwFrame resetFrame = new ResetPwFrame();
+			resetFrame.setVisible(true);
+		});
 		bottom.add(resetPw);
 		this.add(bottom, BorderLayout.SOUTH);
 
