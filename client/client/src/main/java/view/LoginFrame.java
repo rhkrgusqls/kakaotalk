@@ -122,18 +122,29 @@ public class LoginFrame extends JFrame{
 		loginVerify.setMaximumSize(new Dimension(240, 35));
 		loginVerify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시				
+				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함
+				//TODO : MainController.login(id, pw)을 확인 필요 
+				//		값이 맞든 안맞든 공백이든 BaseFrame으로 넘어감
+				
 				String id = inputId.getText();
 				String pw = inputPw.getText();
-//				boolean isUserId = db.isRegisteredUser(id);@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-				if(MainController.login(id, pw)) {
-					new Base();
-				} else {
-					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
-//					new SignUpFrame(); // 로그인실패시 회원가입 프레임 창으로 넘어감  
-				}
-			}
-		});
+				 try {
+			            if(MainController.login(id, pw)) {
+			                new Base();
+			                dispose(); // 로그인 성공 시 현재 창 닫기
+			            } else {
+			                JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
+			                RegisterFrame registerFrame = new RegisterFrame();
+			    			registerFrame.setVisible(true);
+			            }
+			        } catch (Exception ex) {
+			            ex.printStackTrace();
+			            JOptionPane.showMessageDialog(null, "서버 연결에 실패했습니다.\n회원가입 화면으로 이동합니다.");
+			            new RegisterFrame();
+			            dispose();
+			        }
+			    }
+			});
 		autoLogin = new JCheckBox("자동 로그인");
 		autoLogin.setOpaque(false);
 		autoLogin.setContentAreaFilled(false);
