@@ -23,59 +23,47 @@ public class OpenChatRoomSearchFrame extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                // 완전 흰색 배경
-                int width = getWidth();
-                int height = getHeight();
                 g.setColor(Color.WHITE);
-                g.fillRect(0, 0, width, height);
+                g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
-        // top: 좌측엔 타이틀, 우측엔 최소화 닫기
         top.setLayout(new BorderLayout());
         top.setOpaque(false);
         top.setPreferredSize(new Dimension(0, 32));
 
-        // 좌측 타이틀
         JLabel titleLabel = new JLabel("오픈채팅 목록");
         titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         titleLabel.setForeground(new Color(50, 50, 50));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
         top.add(titleLabel, BorderLayout.WEST);
 
-        // 우측 버튼 패널
         JPanel rightBtnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         rightBtnPanel.setOpaque(false);
 
-        // 닫기 버튼
         ImageIcon exListIcon = new ImageIcon("./image/exit.png");
         Image scaledexListImg = exListIcon.getImage().getScaledInstance(12, 12, Image.SCALE_SMOOTH);
         exit = new JButton(new ImageIcon(scaledexListImg));
-        exit.setFont(new Font("Arial", Font.BOLD, 10));
+        exit.setPreferredSize(new Dimension(20, 20));
+        exit.setMargin(new Insets(0, 0, 0, 0));
         exit.setOpaque(false);
         exit.setContentAreaFilled(false);
         exit.setBorderPainted(false);
-        exit.setPreferredSize(new Dimension(20, 20));
-        exit.setMargin(new Insets(0, 0, 0, 0));
-        exit.addActionListener(e -> System.exit(0));
+        exit.addActionListener(e -> dispose()); // System.exit(0) 대신 창만 닫기
 
-        // 최소화 버튼
         ImageIcon mnListIcon = new ImageIcon("./image/minimize.png");
         Image scaledmnListImg = mnListIcon.getImage().getScaledInstance(12, 12, Image.SCALE_SMOOTH);
         hide = new JButton(new ImageIcon(scaledmnListImg));
-        hide.setFont(new Font("Arial", Font.BOLD, 20));
-        hide.setFocusPainted(false);
+        hide.setPreferredSize(new Dimension(30, 20));
+        hide.setMargin(new Insets(0, 0, 0, 0));
         hide.setOpaque(false);
         hide.setContentAreaFilled(false);
         hide.setBorderPainted(false);
-        hide.setPreferredSize(new Dimension(30, 20));
-        hide.setMargin(new Insets(0, 0, 0, 0));
         hide.addActionListener(e -> setState(JFrame.ICONIFIED));
 
         rightBtnPanel.add(hide);
         rightBtnPanel.add(exit);
         top.add(rightBtnPanel, BorderLayout.EAST);
 
-        // 창 드래그 이동
         top.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 initialClick = e.getPoint();
@@ -89,10 +77,9 @@ public class OpenChatRoomSearchFrame extends JFrame {
                 setLocation(p.x + dx, p.y + dy);
             }
         });
-
         add(top, BorderLayout.NORTH);
 
-        // 2. 검색 영역 (텍스트필드 + 검색Btn)
+        // 2. 검색 영역
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         searchPanel.setBackground(Color.WHITE);
 
@@ -111,24 +98,19 @@ public class OpenChatRoomSearchFrame extends JFrame {
         searchBtn.setOpaque(true);
         searchBtn.setFocusPainted(false);
         searchBtn.addActionListener(e -> {
-			String input = searchField.getText().trim();
-			if(input.isEmpty()) {
-				JOptionPane.showMessageDialog(null, "오픈채팅방 이름을 입력해주세요.");
-			}
-			//TODO 오픈채팅방 이름입력에 따른 검색버튼입니다, 이름검색에 따른 오픈채팅방 리스트 표기 구현필요
-		});
+            String input = searchField.getText().trim();
+            if(input.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "오픈채팅방 이름을 입력해주세요.");
+            }
+        });
         searchPanel.add(searchField);
         searchPanel.add(searchBtn);
 
-        // ------ Center 영역 패널로 그룹핑 ------
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BorderLayout());
+        JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(searchPanel, BorderLayout.NORTH);
-
-        // [여기서 리스트와 검색창 사이 구분선!]
         centerPanel.add(new JSeparator(), BorderLayout.CENTER);
 
-        // 3. 채팅방 목록 리스트 (더미 데이터 + 커스텀 렌더러 예시)
+        // 3. 채팅방 목록 리스트
         String[][] dummyData = new String[10][3];
         for (int i = 0; i < 10; i++) {
             dummyData[i][0] = "오픈 채팅방(익명) " + (i + 1);
@@ -137,32 +119,26 @@ public class OpenChatRoomSearchFrame extends JFrame {
         }
 
         chatList = new JList<>(dummyData);
+        // 공통 ChatRoomCellRenderer
         chatList.setCellRenderer(new ChatRoomCellRenderer());
         chatList.setFixedCellHeight(70);
         chatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane chatListScroll = new JScrollPane(chatList);
-        // 리스트에 얇은 회색 테두리
-        chatListScroll.setBorder(BorderFactory.createCompoundBorder(
-              BorderFactory.createLineBorder(new Color(0xD3D3D3)), // 연회색
-              BorderFactory.createEmptyBorder(0,0,0,0)
-        ));
+        chatListScroll.setBorder(BorderFactory.createLineBorder(new Color(0xD3D3D3)));
 
-        // 리스트가 separator 아래로 오도록
         JPanel listPanel = new JPanel(new BorderLayout());
-        listPanel.add(centerPanel, BorderLayout.NORTH);         // 검색 + separator
-        listPanel.add(chatListScroll, BorderLayout.CENTER);     // 리스트
+        listPanel.add(centerPanel, BorderLayout.NORTH);
+        listPanel.add(chatListScroll, BorderLayout.CENTER);
 
         add(listPanel, BorderLayout.CENTER);
 
-        // 더블클릭 채팅방 열기
         chatList.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                int idx = chatList.locationToIndex(e.getPoint());
-                if (idx >= 0) {
-                    String[] roomData = (String[]) chatList.getModel().getElementAt(idx);
-                    if (e.getClickCount() == 2) { // 더블클릭
-                        openChatRoomWindow(roomData);
+                if (e.getClickCount() == 2) {
+                    int idx = chatList.locationToIndex(e.getPoint());
+                    if (idx >= 0) {
+                        openChatRoomWindow((String[]) chatList.getModel().getElementAt(idx));
                     }
                 }
             }
@@ -193,44 +169,5 @@ public class OpenChatRoomSearchFrame extends JFrame {
         chatWindow.add(chatingPanel);
 
         chatWindow.setVisible(true);
-    }
-
-    // 채팅방 셀 커스텀 렌더러
-    static class ChatRoomCellRenderer extends JPanel implements ListCellRenderer<String[]> {
-        private JLabel iconLabel = new JLabel();
-        private JLabel topLabel = new JLabel();
-        private JLabel bottomLabel = new JLabel();
-
-        public ChatRoomCellRenderer() {
-            setLayout(new BorderLayout(10, 0));
-            iconLabel.setPreferredSize(new Dimension(45, 45));
-            JPanel textPanel = new JPanel();
-            textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-            topLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-            bottomLabel.setFont(new Font("맑은 고딕", Font.PLAIN, 11));
-            textPanel.add(topLabel);
-            textPanel.add(bottomLabel);
-            add(iconLabel, BorderLayout.WEST);
-            add(textPanel, BorderLayout.CENTER);
-            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        }
-        @Override
-        public Component getListCellRendererComponent(JList<? extends String[]> list, String[] value, int index, boolean isSelected, boolean cellHasFocus) {
-            topLabel.setText(value[0]);
-            bottomLabel.setText(value[1]);
-            ImageIcon icon = new ImageIcon(value[2]);
-            if (icon.getIconWidth() > 0) {
-                Image img = icon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
-                iconLabel.setIcon(new ImageIcon(img));
-            } else {
-                iconLabel.setIcon(null);
-            }
-            setBackground(isSelected ? new Color(0xEDEDED) : Color.WHITE);
-            return this;
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new OpenChatRoomSearchFrame().setVisible(true));
     }
 }

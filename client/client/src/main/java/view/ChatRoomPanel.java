@@ -42,7 +42,7 @@ public class ChatRoomPanel extends JPanel {
 			if(input.isEmpty()) {
 				JOptionPane.showMessageDialog(null, "채팅방 이름을 입력해주세요.");
 			}
-			//TODO 채팅방이름 입력에 따른 검색버튼입니다, 채티방이름 검색에 따른 채티방 표기 구현필요
+			//TODO 채팅방이름 입력에 따른 검색버튼입니다, 채티방이름 검색에 따른 채팅방 표기 구현필요
 		});
 		searchPanel.setBackground(new Color(0xFFFFFF));
 		searchOpenChatBtn = new JButton("오픈채팅");
@@ -53,6 +53,10 @@ public class ChatRoomPanel extends JPanel {
 		searchPanel.add(searchBtn);
 		searchPanel.add(searchOpenChatBtn);
 		addChatRoomBtn = new JButton("방 생성"); // 방생성 버튼
+		addChatRoomBtn.addActionListener(e -> {
+			AddChatRoomFrame addChatRoom = new AddChatRoomFrame();
+			addChatRoom.setVisible(true);
+		});
 		searchPanel.add(addChatRoomBtn);
 		this.add(searchPanel);
 		
