@@ -3,6 +3,8 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class FriendPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -11,6 +13,7 @@ public class FriendPanel extends JPanel {
 	public JButton addFriendsBtn;
 	public JList myPf;
 	public JList friendList;
+	public JTextField friendSearchBar;
 
 	public FriendPanel() {
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -19,6 +22,12 @@ public class FriendPanel extends JPanel {
 		// 검색 + 친구추가 버튼 영역
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchPanel.setBackground(Color.white);
+		friendSearchBar = new JTextField();
+		friendSearchBar.setPreferredSize(new Dimension(220, 20));
+		friendSearchBar.setBackground(Color.WHITE);
+		friendSearchBar.setOpaque(true);
+		friendSearchBar.setHorizontalAlignment(SwingConstants.CENTER);
+		searchPanel.add(friendSearchBar);
 		ImageIcon searchIcon = new ImageIcon("./image/search.png");
 		Image scaledSearchImg = searchIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
 		searchBtn = new JButton(new ImageIcon(scaledSearchImg));
@@ -28,6 +37,14 @@ public class FriendPanel extends JPanel {
 		searchBtn.setContentAreaFilled(false);
 		searchBtn.setOpaque(true);
 		searchBtn.setFocusPainted(false);    
+		searchBtn.addActionListener(e -> {
+			String input = friendSearchBar.getText().trim();
+			if(input.isEmpty()) {
+				JOptionPane.showMessageDialog(null, "이름을 입력해주세요.");
+			}
+			//TODO 친구이름입력에 따른 검색버튼입니다, 이름검색에 따른 친구 리스트 표기 구현필요
+		});
+		
 		ImageIcon addFriendIcon = new ImageIcon("./image/addFriend.png");
 		Image scaledAddFriendImg = addFriendIcon.getImage().getScaledInstance(28, 28, Image.SCALE_SMOOTH);
 		addFriendsBtn = new JButton(new ImageIcon(scaledAddFriendImg));
@@ -37,6 +54,10 @@ public class FriendPanel extends JPanel {
 		addFriendsBtn.setContentAreaFilled(false);
 		addFriendsBtn.setOpaque(true);
 		addFriendsBtn.setFocusPainted(false);
+		addFriendsBtn.addActionListener(e -> {
+			AddFriendFrame addFriend = new AddFriendFrame();
+			addFriend.setVisible(true);
+		});
 		searchPanel.add(searchBtn);
 		searchPanel.add(addFriendsBtn);
 		this.add(searchPanel);

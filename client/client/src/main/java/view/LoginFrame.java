@@ -5,17 +5,19 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
-import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
 
 import controller.MainController;
 // 123123 
 public class LoginFrame extends JFrame{
 	private static final long serialVersionUID = 1L;
+
+
 	//DB 객체 필드선언
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
+	Point initalClick;
 	
 	private JPanel middle; // 중간
 	private ImageIcon imageIcon; // 이미지  
@@ -28,6 +30,14 @@ public class LoginFrame extends JFrame{
 	private JPanel bottom; // 하단
 	private JButton resetPw;
 	
+	//비밀번호 재설정 프레임
+	public JFrame resetFrame;
+	public JTextField id;
+	public JTextField pw;
+	public JTextField newPw;
+	public JButton confirm;
+	public JButton cancle;
+	
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
 		
@@ -38,6 +48,23 @@ public class LoginFrame extends JFrame{
 		top = new JPanel();
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		top.setOpaque(false);
+		top.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				initalClick = e.getPoint();
+			}
+		});
+		
+		top.addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e) {
+				Point currentLocation = getLocation();
+				int deltaX = e.getX() - initalClick.x;
+				int deltaY = e.getY() - initalClick.y;
+				
+				setLocation(currentLocation.x + deltaX, currentLocation.y + deltaY);
+				
+			}
+		});
+		
 		exit = new JButton("X");
 		exit.setFont(new Font("Arial", Font.BOLD, 20));
 		exit.setOpaque(false);
@@ -95,18 +122,29 @@ public class LoginFrame extends JFrame{
 		loginVerify.setMaximumSize(new Dimension(240, 35));
 		loginVerify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함 지금은 임시				
+				//TODO : DB을 통한 아이디, 비밀번호를 가져와야함
+				//TODO : MainController.login(id, pw)을 확인 필요 
+				//		값이 맞든 안맞든 공백이든 BaseFrame으로 넘어감
+				
 				String id = inputId.getText();
 				String pw = inputPw.getText();
-//				boolean isUserId = db.isRegisteredUser(id);@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-				if(MainController.login(id, pw)) {
-					new Base();
-				} else {
-					JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
-//					new SignUpFrame(); // 로그인실패시 회원가입 프레임 창으로 넘어감  
-				}
-			}
-		});
+				 try {
+			            if(MainController.login(id, pw)) {
+			                new Base();
+			                dispose(); // 로그인 성공 시 현재 창 닫기
+			            } else {
+			                JOptionPane.showMessageDialog(null, "아이디 또는 비밀번호가 올바르지 않습니다.");
+			                RegisterFrame registerFrame = new RegisterFrame();
+			    			registerFrame.setVisible(true);
+			            }
+			        } catch (Exception ex) {
+			            ex.printStackTrace();
+			            JOptionPane.showMessageDialog(null, "서버 연결에 실패했습니다.\n회원가입 화면으로 이동합니다.");
+			            new RegisterFrame();
+			            dispose();
+			        }
+			    }
+			});
 		autoLogin = new JCheckBox("자동 로그인");
 		autoLogin.setOpaque(false);
 		autoLogin.setContentAreaFilled(false);
@@ -135,6 +173,10 @@ public class LoginFrame extends JFrame{
 		resetPw.setOpaque(false);
 		resetPw.setContentAreaFilled(false);
 		resetPw.setBorderPainted(false);
+		resetPw.addActionListener(e -> {
+			ResetPwFrame resetFrame = new ResetPwFrame();
+			resetFrame.setVisible(true);
+		});
 		bottom.add(resetPw);
 		this.add(bottom, BorderLayout.SOUTH);
 

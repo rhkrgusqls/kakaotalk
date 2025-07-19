@@ -315,4 +315,17 @@ public class DBManagerModule {
 
         return chatList;
     }
+    public boolean insertChatData(int chatRoomNum, String userId, String text) {
+        String sql = "INSERT INTO ChatList (chatRoomNum, userId, text) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, chatRoomNum);
+            stmt.setString(2, userId);
+            stmt.setString(3, text);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
