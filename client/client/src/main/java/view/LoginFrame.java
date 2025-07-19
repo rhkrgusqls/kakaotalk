@@ -5,7 +5,6 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.io.File;
-import java.awt.Color;
 import java.awt.geom.RoundRectangle2D;
 
 import controller.MainController;
@@ -18,6 +17,7 @@ public class LoginFrame extends JFrame{
 	private JPanel top; // 상단
 	private JButton exit;
 	private JButton hide;
+	Point initalClick;
 	
 	private JPanel middle; // 중간
 	private ImageIcon imageIcon; // 이미지  
@@ -30,6 +30,14 @@ public class LoginFrame extends JFrame{
 	private JPanel bottom; // 하단
 	private JButton resetPw;
 	
+	//비밀번호 재설정에 따른 패널 
+	public JFrame resetFram;
+	public JTextField id;
+	public JTextField pw;
+	public JTextField newPw;
+	public JButton confirm;
+	public JButton cancle;
+	
 	public LoginFrame() { // 생성자
 //		System.out.println(new File(".").getAbsolutePath()); // 경로 확인
 		
@@ -40,6 +48,23 @@ public class LoginFrame extends JFrame{
 		top = new JPanel();
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		top.setOpaque(false);
+		top.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent e) {
+				initalClick = e.getPoint();
+			}
+		});
+		
+		top.addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e) {
+				Point currentLocation = getLocation();
+				int deltaX = e.getX() - initalClick.x;
+				int deltaY = e.getY() - initalClick.y;
+				
+				setLocation(currentLocation.x + deltaX, currentLocation.y + deltaY);
+				
+			}
+		});
+		
 		exit = new JButton("X");
 		exit.setFont(new Font("Arial", Font.BOLD, 20));
 		exit.setOpaque(false);

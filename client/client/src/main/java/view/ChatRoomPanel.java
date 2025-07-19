@@ -11,6 +11,7 @@ public class ChatRoomPanel extends JPanel {
 	public JButton addFriendsBtn;
 	public JList myPf;
 	public JList chatList;
+	public JTextField chatRoomSearchBar;
 
 	public ChatRoomPanel() {
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -19,6 +20,12 @@ public class ChatRoomPanel extends JPanel {
 		// 검색 + 친구추가 버튼 영역
 		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 		searchPanel.setBackground(Color.white);
+		chatRoomSearchBar = new JTextField();
+		chatRoomSearchBar.setPreferredSize(new Dimension(180, 20));
+		chatRoomSearchBar.setBackground(Color.WHITE);
+		chatRoomSearchBar.setOpaque(true);
+		chatRoomSearchBar.setHorizontalAlignment(SwingConstants.CENTER);
+		searchPanel.add(chatRoomSearchBar);
 		ImageIcon searchIcon = new ImageIcon("./image/search.png");
 		Image scaledSearchImg = searchIcon.getImage().getScaledInstance(23, 23, Image.SCALE_SMOOTH);
 		searchBtn = new JButton(new ImageIcon(scaledSearchImg));
@@ -28,6 +35,13 @@ public class ChatRoomPanel extends JPanel {
 		searchBtn.setContentAreaFilled(false);
 		searchBtn.setOpaque(true);
 		searchBtn.setFocusPainted(false);   
+		searchBtn.addActionListener(e -> {
+			String input = chatRoomSearchBar.getText().trim();
+			if(input.isEmpty()) {
+				JOptionPane.showMessageDialog(null, "채팅방 이름을 입력해주세요.");
+			}
+			//TODO 채팅방이름 입력에 따른 검색버튼입니다, 채티방이름 검색에 따른 채티방 표기 구현필요
+		});
 		searchPanel.setBackground(new Color(0xFFFFFF));
 		addFriendsBtn = new JButton("오픈채팅");
 		searchPanel.add(searchBtn);
