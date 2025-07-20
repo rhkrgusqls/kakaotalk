@@ -17,7 +17,7 @@ public class DBManager {
     
     private final String DATA_BASE_IP = "34.47.125.114";
     private final int DATA_BASE_PORT = 3306;
-    private final String DB_NAME = "kakaotalk";
+//    private final String DB_NAME = "kakaotalk";
     private final String DB_NAME = "kakaotalkUser1TestData";
     private final String DB_USER = "root";
     private final String DB_PASSWORD = "QWER1234!";
@@ -75,7 +75,7 @@ public class DBManager {
     
     public void saveUser(User user) {
         // FriendList 참조 데이터 삭제 (제약 위반 방지)
-    	String deleteSql = "DELETE FROM UserData WHERE id = ?"; 
+//    	String deleteSql = "DELETE FROM UserData WHERE id = ?"; 
         String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
 
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
