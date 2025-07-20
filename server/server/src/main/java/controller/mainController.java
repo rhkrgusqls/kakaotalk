@@ -104,16 +104,22 @@ public class mainController {
 	    return builder.toString();
 	}
 	
-    public static String loadChatRoomData(String id) {
+	public static String loadChatRoomData(String id) {
         DBManagerModule db = new DBManagerModule();
-        List<ChatRoomData> rooms = db.loadChatRoom(id);
+        // == 매개변수 id를 사용하여 해당 사용자의 채팅방만 가져옵니다.
+        List<ChatRoomData> rooms = db.loadChatRoom(id); 
+        
         StringBuilder builder = new StringBuilder();
         builder.append("%LoadChatRoomData%");
-        for (ChatRoomData room : rooms) {
-            builder.append("&chatRoomNum$").append(room.chatRoomNum)
-                   .append("&roomType$").append(room.roomType)
-                   .append("&roomName$").append(room.roomName);
+        
+        if (rooms != null) { // DB 조회 결과가 null이 아닌지 확인
+            for (ChatRoomData room : rooms) {
+                builder.append("&chatRoomNum$").append(room.chatRoomNum)
+                       .append("&roomType$").append(room.roomType)
+                       .append("&roomName$").append(room.roomName);
+            }
         }
+        
         builder.append("%");
         return builder.toString();
     }

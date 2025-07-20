@@ -6,21 +6,26 @@ import javax.swing.border.EmptyBorder;
 import controller.MainController;
 import model.ChatRoom;
 import model.DBManager;
+import observer.Observer;
+import observer.ServerCallEventHandle;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-public class ChatRoomPanel extends JPanel {
+import java.util.List;
+
+public class ChatRoomPanel extends JPanel implements Observer{
 	private static final long serialVersionUID = 1L;
 
 	public JButton searchBtn;
 	public JButton searchOpenChatBtn;
 	public JButton addChatRoomBtn;
-	public JList chatList;
+	public JList<String[]> chatList;
 	public JTextField chatRoomSearchBar;
 
 	public ChatRoomPanel() {
+		System.out.println("[DEBUG] ChatRoomPanel 생성자 호출");
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 		this.setBackground(new Color(0xFFFFFF));
@@ -72,18 +77,8 @@ public class ChatRoomPanel extends JPanel {
 //            dummyData[i][1] = "최근 메시지 미리보기 " + (i + 1);  // 하단 라벨 텍스트
 //            dummyData[i][2] = "./profile/chatRoom/test.jpg";                 // 아이콘 이미지 경로
 //        }
-		DBManager db = new DBManager();
-		String userId = MainController.getLoggedInUser().getId();
-		java.util.List<ChatRoom> rooms = db.loadChatRoomsForUser(userId);
-		// DB 데이터를 JList 형식으로 변환
-        String[][] chatData = new String[rooms.size()][3];
-        for (int i = 0; i < rooms.size(); i++) {
-            ChatRoom room = rooms.get(i);
-            chatData[i][0] = room.getRoomName();  // 채팅방 이름
-            chatData[i][1] = db.loadLastMessageForRoom(room.getChatRoomNum());  // 최근 메시지
-            chatData[i][2] = "./profile/chatRoom/test.jpg";  // 이미지 경로 (TODO: 실제 경로)
-        }
-        chatList = new JList<>(chatData);
+		
+		chatList = new JList<>(new String[0][3]); // 빈 데이터로 JList 초기화
         chatList.setCellRenderer(new ChatRoomCellRenderer());
         chatList.setFixedCellHeight(70);
         chatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -91,22 +86,47 @@ public class ChatRoomPanel extends JPanel {
         chatList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 1) { // 혹은 2로 바꾸면 더블클릭
-                	int index = chatList.locationToIndex(e.getPoint());
-                	if (index >= 0) {
-                	    String[] data = (String[]) chatList.getModel().getElementAt(index);
-                	    openChatRoomWindow(data);
-                	}
+                if (e.getClickCount() == 1) {
+                    int index = chatList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        String[] data = chatList.getModel().getElementAt(index);
+                        openChatRoomWindow(data);
+                    }
                 }
             }
         });
-        
         JPanel chatRoomPanel = new JPanel(new BorderLayout());
         chatRoomPanel.setBackground(new Color(0xFFFFFF));
-        chatRoomPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         chatRoomPanel.add(new JScrollPane(chatList), BorderLayout.CENTER);
         this.add(chatRoomPanel);
+        ServerCallEventHandle.registerObserver(this);
+        System.out.println("[DEBUG] ChatRoomPanel이 옵저버로 등록됨");
+//        JPanel chatRoomPanel = new JPanel(new BorderLayout());
+        
+//        chatRoomPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+//        chatRoomPanel.add(new JScrollPane(chatList), BorderLayout.CENTER);
+//        this.add(chatRoomPanel);
 	}
+	@Override
+    public void onMessageReceived(String message) {}
+	@Override
+    public void onChatRoomListUpdated(List<ChatRoom> rooms) {
+        System.out.println("[LOG] onChatRoomListUpdated 호출됨! 방 개수: " + rooms.size());
+
+        String[][] chatData = new String[rooms.size()][3];
+        for (int i = 0; i < rooms.size(); i++) {
+            ChatRoom room = rooms.get(i);
+            chatData[i][0] = room.getRoomName();
+            // TODO: 서버에서 최근 메시지도 함께 받아와 room.getLastMessage() 등으로 설정해야 함
+            chatData[i][1] = "최근 메시지";
+            chatData[i][2] = "./profile/chatRoom/test.jpg";
+        }
+        chatList.setListData(chatData); // JList의 데이터를 새 데이터로 교체
+        
+        // UI를 새로 그리도록 명시적으로 요청
+        this.revalidate();
+        this.repaint();
+    }
 	
 	private void openChatRoomWindow(String[] data) {
 	    JFrame chatWindow = new JFrame(data[0]); 

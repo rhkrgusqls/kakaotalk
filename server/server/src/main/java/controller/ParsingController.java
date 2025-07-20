@@ -102,6 +102,12 @@ public class ParsingController {
                 } else {
                     return "%Error%&message$id or phoneNum missing for ADDFRIEND%";
                 }
+            case "LoadChatRoomData":
+            	if (data.id != null && data.id.length > 0) {
+                    return mainController.loadChatRoomData(data.id[0]);
+                } else {
+                    return "%Error%&message$User ID is missing for LoadChatRoomData%";
+                }
             // 여기에 친구 목록, 채팅방 목록 등 다른 OPCODE에 대한 처리를 추가
             // case "LoadFriendData":
             //     return mainController.getFriendListAsString(data.phoneNum[0]);

@@ -67,22 +67,17 @@ public class DBManager {
     
     public void saveUser(User user) {
         // FriendList 참조 데이터 삭제 (제약 위반 방지)
-        String deleteFriendSql = "DELETE FROM FriendList WHERE userPhone1 = (SELECT phoneNum FROM UserData WHERE id = ?) OR userPhone2 = (SELECT phoneNum FROM UserData WHERE id = ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement deleteFriendPstmt = conn.prepareStatement(deleteFriendSql)) {
-            deleteFriendPstmt.setString(1, user.getId());
-            deleteFriendPstmt.setString(2, user.getId());
-            deleteFriendPstmt.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
+    	String deleteSql = "DELETE FROM UserData WHERE id = ?"; 
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
+            // FriendList 관련 참조 데이터 삭제 로직 (이전 답변 참고, 필요 시 추가)
+            
             try (PreparedStatement deletePstmt = conn.prepareStatement(deleteSql)) {
+                // [추가합니다] 삭제할 사용자의 ID를 지정합니다.
+                deletePstmt.setString(1, user.getId()); 
                 deletePstmt.executeUpdate();
             }
 

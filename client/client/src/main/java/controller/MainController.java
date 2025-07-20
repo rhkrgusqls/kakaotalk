@@ -1,5 +1,11 @@
 package controller;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.SwingUtilities;
+
+import model.ChatRoom;
 import model.DBManager;
 import model.DataParsingModule;
 import model.TCPManager;
@@ -8,6 +14,7 @@ import observer.Observer;
 import observer.ServerCallEventHandle;
 
 public class MainController implements Observer {
+	private static User loggedInUser; 
     static TCPManager tcp;
     static MainController instance = new MainController();
 
@@ -46,14 +53,15 @@ public class MainController implements Observer {
             return false;
         }
         User myData = new User(id, password, data.getUserName(), "./profile/self/coldplay.jpg");
+        loggedInUser = myData;
         DBManager db = new DBManager();
         db.saveUser(myData);
+        requestChatRoomsFromServer(id);
         return true;
     }
-
+    
     public static User getLoggedInUser() {
-        DBManager db = new DBManager();
-    	return db.getLoggedInUser();
+        return loggedInUser;
     }
     
     // 비동기 메시지를 수신하는 콜백 (Observer 인터페이스 구현)
@@ -102,4 +110,54 @@ public class MainController implements Observer {
         db.saveFriend(data.getPhoneNum());
         return true;
     }
+    //서버에 채팅방 목록을 요청하고 결과를 파싱하는 메서드
+    public static void requestChatRoomsFromServer(String userId) {
+        new Thread(() -> {
+            // [추가합니다] 서버에 요청 메시지 전송
+            String requestMessage = "%LoadChatRoomData%&id$" + userId + "%";
+            String response = tcp.sendSyncMessage(requestMessage);
+            
+            // [수정합니다] UI 업데이트는 Swing EDT에서 처리
+            SwingUtilities.invokeLater(() -> {
+                if (response != null && response.startsWith("%LoadChatRoomData%")) {
+                    System.out.println("[LOG] 서버로부터 채팅방 데이터 수신 성공. 파싱 및 UI 업데이트 시작...");
+                    List<ChatRoom> chatRooms = parseChatRoomResponse(response);
+                    // [이 줄이 실행되는지 확인]
+                    System.out.println("[LOG] 파싱 완료. 방 개수: " + chatRooms.size());
+                    ServerCallEventHandle.notifyChatRoomListUpdated(chatRooms); // [이 줄이 핵심]
+                } else {
+                    System.err.println("[ERROR] 서버 응답 실패 또는 잘못된 응답: " + response);
+                }
+            });
+        }).start();
+    }
+  
+    private static List<ChatRoom> parseChatRoomResponse(String response) {
+        // (파싱 로직은 기존과 동일)
+        List<ChatRoom> rooms = new ArrayList<>();
+        try {
+            String dataPart = response.substring(response.indexOf('%', 1) + 1, response.lastIndexOf('%'));
+            String[] entries = dataPart.split("&chatRoomNum\\$");
+            for (int i = 1; i < entries.length; i++) {
+                String entry = entries[i];
+                String[] parts = entry.split("&");
+                ChatRoom room = new ChatRoom();
+                room.setChatRoomNum(Integer.parseInt(parts[0].trim()));
+                for (int j = 1; j < parts.length; j++) {
+                    String[] kv = parts[j].split("\\$", 2);
+                    if (kv.length == 2) {
+                        if (kv[0].equals("roomType")) room.setRoomType(kv[1]);
+                        else if (kv[0].equals("roomName")) room.setRoomName(kv[1]);
+                    }
+                }
+                rooms.add(room);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return rooms;
+    }
+    @Override
+    public void onChatRoomListUpdated(List<ChatRoom> rooms) {
+        // MainController는 이벤트를 전송하는 역할만 하므로, 수신부는 비움
+    }
 }
+

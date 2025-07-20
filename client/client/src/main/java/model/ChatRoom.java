@@ -4,6 +4,7 @@ public class ChatRoom {
     private int chatRoomNum;
     private String roomType;
     private String roomName;
+    private String lastMessage;
 
     public ChatRoom() {}
 
@@ -36,4 +37,6 @@ public class ChatRoom {
     public void setRoomName(String roomName) {
         this.roomName = roomName;
     }
+    public String getLastMessage() { return lastMessage; }
+    public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
 }

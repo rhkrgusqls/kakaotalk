@@ -240,33 +240,27 @@ public class DBManagerModule {
     }
 
     
-    public List<ChatRoomData> loadChatRoom(String id) {
-        List<ChatRoomData> roomList = new ArrayList<>();
-        String sql = "SELECT cr.chatRoomNum, cr.roomType, cr.roomName " +
-                     "FROM ChatRoomList cr " +
-                     "JOIN ChatRoomMember rm ON cr.chatRoomNum = rm.chatRoomNum " +
-                     "WHERE rm.id = ?";
-
+    public List<ChatRoomData> loadChatRoom(String userId) {
+        List<ChatRoomData> list = new ArrayList<>();
+        String sql = "SELECT * FROM ChatRoomList WHERE userId = ?";
         try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, id);
-            ResultSet rs = stmt.executeQuery();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                int num = rs.getInt("chatRoomNum");
-                String type = rs.getString("roomType");
-                String name = rs.getString("roomName");
-
-                ChatRoomData room = new ChatRoomData(num, type, name);
-                roomList.add(room);
+                ChatRoomData room = new ChatRoomData(
+                    rs.getInt("chatRoomNum"),
+                    rs.getString("roomType"),
+                    rs.getString("roomName")
+                );
+                list.add(room);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return roomList;
+        return list;
     }
     
     public String getIdByPhoneNum(String phoneNum) {
