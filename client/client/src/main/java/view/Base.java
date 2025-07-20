@@ -9,6 +9,7 @@ import model.User;
 
 public class Base extends JFrame implements ActionListener {
     private static final long serialVersionUID = 1L;
+    private static Base instance;
     // --- 상단 ---
     private JPanel top;
     private JButton exit;
@@ -31,6 +32,7 @@ public class Base extends JFrame implements ActionListener {
     private ChatRoomPanel chatRoomPanel;
 
     public Base() {
+        instance = this;
         this.setUndecorated(true);
         this.setLayout(new BorderLayout());
         this.setLocation(1000, 200);
@@ -202,6 +204,16 @@ public class Base extends JFrame implements ActionListener {
         basePanel.repaint();    // 화면을 다시 그림
     }
     
+    public FriendPanel getFriendPanel() {
+        return friendPanel;
+    }
+
+    public ChatRoomPanel getChatRoomPanel() {
+        return chatRoomPanel;
+    }
+
+    public static Base getInstance() { return instance; }
+
     // main 메서드는 LoginFrame에서 실행하므로 여기서는 없어도 됩니다.
     // public static void main(String[] args) { new Base(); }
 }

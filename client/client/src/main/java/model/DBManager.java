@@ -4,22 +4,17 @@ import java.sql.*;
 import java.util.*;
 //로컬 저장소를 통해 데이터 불러오기(전화번호, 이미지 처럼)
 public class DBManager {
-	/*SQLite용 커넥터
-	private final String DB_FILE_PATH = "/path/to/database.sqlite";
-
-	private Connection getConnection() throws Exception {
-	    String url = "jdbc:sqlite:" + DB_FILE_PATH;
-	    return DriverManager.getConnection(url);
-	}
-	*/
-
-    public DBManager() {}
-    
+    private static DBManager instance;
+    private String DB_NAME = "kakaotalkUser1TestData";
     private final String DATA_BASE_IP = "34.47.125.114";
     private final int DATA_BASE_PORT = 3306;
-    private String DB_NAME = "kakaotalkUser1TestData";
     private final String DB_USER = "root";
     private final String DB_PASSWORD = "QWER1234!";
+
+    public static DBManager getInstance() {
+        if (instance == null) instance = new DBManager();
+        return instance;
+    }
 
     // 사용자 ID(예: 3)로 DB_NAME을 동적으로 변경
     public void setUserDB(String userId) {
@@ -30,10 +25,7 @@ public class DBManager {
         }
     }
 
-    // DB 이름을 직접 지정
-    public void setDBName(String dbName) {
-        this.DB_NAME = dbName;
-    }
+    public void setDBName(String dbName) { this.DB_NAME = dbName; }
 
     // UserData에 해당 id가 이미 존재하는지 확인
     public boolean isUserExists(String id) {
@@ -72,16 +64,14 @@ public class DBManager {
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
     }
 
-    private Connection getConnection() throws Exception {
+    // getConnection을 public으로 변경
+    public Connection getConnection() throws Exception {
         String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + DB_NAME +
-                     "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
-        
-        // 운영 DB 접속 시 프로그램 종료
+                "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
         if (DB_NAME.equals("kakaotalk")) {
             System.err.println("[ERROR] Access to production database 'kakaotalk' is forbidden from client.");
-            System.exit(1); // 프로그램 즉시 종료
+            System.exit(1);
         }
-
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
     }
 
@@ -123,40 +113,32 @@ public class DBManager {
         return null;
     }
     
+    // UserData, PhoneData 모두에 phoneNum 저장 (로컬DB)
     public void saveUser(User user) {
-        // UserData에 저장
-        String deleteUserSql = "DELETE FROM UserData WHERE id = ?";
-        String insertUserSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
-        // PhoneData에 저장
-        String deletePhoneSql = "DELETE FROM PhoneData";
-        String insertPhoneSql = "INSERT INTO PhoneData(phoneNum) VALUES (?)";
-
+        System.out.println("[DEBUG] saveUser: id=" + user.getId() + ", name=" + user.getName() + ", phoneNum=" + user.getPhoneNum() + ", profileDir=" + user.getProfileDir());
+        String deleteSql = "DELETE FROM UserData WHERE id = ?";
+        String insertSql = "INSERT INTO UserData(id, password, name, profileDir, phoneNum) VALUES (?, ?, ?, ?, ?)";
+        String insertPhoneSql = "INSERT INTO PhoneData(phoneNum, user_id) VALUES (?, ?)";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
-
-            // UserData 기존 id 삭제
-            try (PreparedStatement deletePstmt = conn.prepareStatement(deleteUserSql)) {
+            try (PreparedStatement deletePstmt = conn.prepareStatement(deleteSql)) {
                 deletePstmt.setString(1, user.getId());
                 deletePstmt.executeUpdate();
             }
-            // UserData에 새로 저장
-            try (PreparedStatement insertPstmt = conn.prepareStatement(insertUserSql)) {
+            try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
                 insertPstmt.setString(1, user.getId());
                 insertPstmt.setString(2, user.getPassword());
                 insertPstmt.setString(3, user.getName());
                 insertPstmt.setString(4, user.getProfileDir());
+                insertPstmt.setString(5, user.getPhoneNum());
                 insertPstmt.executeUpdate();
             }
-            // PhoneData 전체 삭제(1명만 저장한다면)
-            try (PreparedStatement deletePhonePstmt = conn.prepareStatement(deletePhoneSql)) {
-                deletePhonePstmt.executeUpdate();
-            }
-            // PhoneData에 새로 저장
+            // PhoneData에도 저장
             try (PreparedStatement insertPhonePstmt = conn.prepareStatement(insertPhoneSql)) {
                 insertPhonePstmt.setString(1, user.getPhoneNum());
+                insertPhonePstmt.setString(2, user.getId());
                 insertPhonePstmt.executeUpdate();
             }
-
             conn.commit();
         } catch (Exception e) {
             e.printStackTrace();
@@ -174,6 +156,7 @@ public class DBManager {
     }
 
 
+    // 친구 추가: friendPhoneNum(전화번호)로 저장
     public void saveFriend(String friendPhoneNum) {
         String sql = "INSERT IGNORE INTO FriendList(friendPhoneNum) VALUES (?)";
         try (Connection conn = getConnection();
@@ -185,6 +168,7 @@ public class DBManager {
         }
     }
 
+    // 친구 목록 불러오기: friendPhoneNum(전화번호) 리스트 반환
     public List<String> loadFriendList() {
         List<String> list = new ArrayList<>();
         String sql = "SELECT friendPhoneNum FROM FriendList";
@@ -300,6 +284,8 @@ public class DBManager {
         }
         return "메시지 없음";  // 기본값
     }
+
+    public String getCurrentDBName() { return DB_NAME; }
 }
 
 

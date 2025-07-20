@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingUtilities;
+import javax.swing.JOptionPane;
 
 import model.Chat;
 import model.ChatRoom;
@@ -54,22 +55,26 @@ public class MainController implements Observer {
         if (data.getUserName() == null) {
             return false;
         }
-        User myData = new User(id, password, data.getUserName(), "./profile/self/coldplay.jpg");
+        // phoneNum도 User 객체에 세팅
+        User myData = new User(id, password, data.getUserName(), "./profile/self/coldplay.jpg", data.getPhoneNum());
         loggedInUser = myData;
-        DBManager db = new DBManager();
         // 내 로컬DB 자동 탐색: 1~8번 DB 중 내 id가 저장된 DB를 찾음
         String myLocalDb = null;
         for (int i = 1; i <= 8; i++) {
             String dbName = "kakaotalkUser" + i + "TestData";
-            if (db.idExistsInDB(dbName, id)) {
+            DBManager.getInstance().setDBName(dbName);
+            if (DBManager.getInstance().idExistsInDB(dbName, id)) {
                 myLocalDb = dbName;
                 break;
             }
         }
         if (myLocalDb != null) {
-            db.setDBName(myLocalDb); // 내 로컬DB로 고정
+            DBManager.getInstance().setDBName(myLocalDb);
+            System.out.println("[DEBUG] 로그인 후 DB: " + DBManager.getInstance().getCurrentDBName());
         }
-        db.saveUser(myData);
+        // saveUser 호출 전 phoneNum 로그 출력
+        System.out.println("[DEBUG] saveUser 호출 전 user.getPhoneNum() = " + myData.getPhoneNum());
+        DBManager.getInstance().saveUser(myData);
         // 앱 시작 시 채팅방 목록 동기화 메시지 전송
         String syncMsg = "%chatListLoad%&id$" + id + "%";
         tcp.sendSyncMessage(syncMsg);
@@ -100,40 +105,45 @@ public class MainController implements Observer {
     }
 
     // 메시지 안의 key$value 형태 파싱 헬퍼
-    private String parseValue(String message, String key) {
+    public static String parseValue(String message, String key) {
         if (message == null) return null;
         String[] parts = message.split("&");
         for (String part : parts) {
             if (part.startsWith(key + "$")) {
-                return part.substring((key + "$").length()).replace("%", "");
+                return part.substring((key + "$" ).length()).replace("%", "");
             }
         }
         return null;
     }
     
-    public static boolean addFriend(String idOrPhone) {
-        DBManager db = new DBManager();
-        
-        DataParsingModule data = new DataParsingModule();
-        if (tcp.isConnected()) {
-            System.out.println("TCP 연결 성공! 로그인 메시지를 보냅니다.");
-            String response = tcp.sendSyncMessage("%ADDFRIEND%&id$" + idOrPhone + "&phoneNum$" + idOrPhone + "%" + "&user$" + db.getLoggedInUser().getId()+ "%");
-            if (response != null) {
-            
-                data.parseData(response);
-            } else {
-                System.err.println("[ERROR] 서버 응답이 null입니다.");
-                return false;
+    public static boolean addFriend(String input) {
+        // 서버에 ADDFRIEND 요청 (내 id와 친구 입력값 모두 전송)
+        User me = getLoggedInUser();
+        if (me == null) {
+            JOptionPane.showMessageDialog(null, "로그인 정보가 없습니다.");
+            return false;
+        }
+        String myId = me.getId();
+        String msg = String.format("%%ADDFRIEND%%&myId$%s&targetId$%s%%", myId, input);
+        String response = tcp.sendSyncMessage(msg);
+        if (response != null && response.contains("phoneNum$")) {
+            String friendPhoneNum = parseValue(response, "phoneNum");
+            String friendId = parseValue(response, "friendId");
+            String friendName = parseValue(response, "friendName");
+            String friendProfileDir = parseValue(response, "friendProfileDir");
+            // UserData에 친구 정보 저장 (없으면 insert, 있으면 update)
+            if (friendId != null && friendName != null && friendProfileDir != null && friendPhoneNum != null) {
+                DBManager.getInstance().saveUser(new User(friendId, "", friendName, friendProfileDir, friendPhoneNum));
             }
+            DBManager.getInstance().saveFriend(friendPhoneNum);
+            JOptionPane.showMessageDialog(null, "친구 추가 성공!");
+            return true;
         } else {
-            System.out.println("TCP 연결 실패!");
+            String errorMsg = parseValue(response, "error");
+            if (errorMsg == null) errorMsg = "존재하지 않는 회원입니다.";
+            JOptionPane.showMessageDialog(null, errorMsg);
             return false;
         }
-        if (data.getPhoneNum() == null) {
-            return false;
-        }
-        db.saveFriend(data.getPhoneNum());
-        return true;
     }
     //서버에 채팅방 목록을 요청하고 결과를 파싱하는 메서드
     public static void requestChatRoomsFromServer(String userId) {

@@ -16,7 +16,7 @@ public class DBManagerModule {
 
     public DBManagerModule() {}
 
-    private Connection getConnection() throws Exception {
+    public Connection getConnection() throws Exception {
         String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + DB_NAME +
                      "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
@@ -469,5 +469,21 @@ public class DBManagerModule {
         String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + dbName +
                 "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
+    }
+
+    // id로 phoneNum을 조회
+    public String getPhoneNumById(String id) {
+        String sql = "SELECT phoneNum FROM UserData WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("phoneNum");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

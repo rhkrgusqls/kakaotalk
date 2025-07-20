@@ -154,7 +154,8 @@ public class ChatRoomPanel extends JPanel implements Observer{
         return -1; // 찾지 못한 경우
     }
 	
-	private void openChatRoomWindow(String[] data) {
+	// 채팅방 창을 열어서 채팅을 표시하는 메서드
+	public void openChatRoomWindow(String[] data) {
 	    JFrame chatWindow = new JFrame(data[0]); 
 	    chatWindow.setSize(450, 600);
 	    chatWindow.setLocationRelativeTo(null);
@@ -245,5 +246,5 @@ public class ChatRoomPanel extends JPanel implements Observer{
 	    SwingUtilities.invokeLater(() -> {
 	        splitPane.setDividerLocation(0.5);
 	    });
-}
+	}
 	}

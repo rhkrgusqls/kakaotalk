@@ -46,6 +46,8 @@ public class mainController {
 	        UserData user = db.getUserDataById(id);
 	        builder.append("&UserName$").append(user.name)
 	               .append("&Profile$").append(user.getProfileImage() != null ? user.getProfileImage() : "");
+	        // phoneNum도 포함
+	        builder.append("&phoneNum$").append(db.getPhoneNumById(id));
 	    }
 	    else{
 	        builder.append("Error:Login Failed");
@@ -83,7 +85,8 @@ public class mainController {
         }
         boolean ok = db.insertUser(id, password, name, profileDir, phoneNum);
         if (ok) {
-            return "%Register%&success$true%";
+            // 회원가입 성공 시 phoneNum도 포함해서 응답
+            return "%Register%&success$true&phoneNum$" + phoneNum + "%";
         } else {
             return "%Register%&success$false%";
         }
@@ -152,21 +155,42 @@ public class mainController {
         }
     }
     
-    public static String addFriend(String userId, String id, String phoneNum) {
+    // 클라이언트에서 myId(내 id), targetId(상대 id/전화번호)로 요청 시 처리
+    public static String addFriend(String myId, String targetId) {
         DBManagerModule db = new DBManagerModule();
-        String resultPhone = db.addFriend(userId, id, phoneNum);
-
-        StringBuilder builder = new StringBuilder();
-        builder.append("%ADDFRIEND%");
-        
-        if (resultPhone != null && !resultPhone.startsWith("DB 처리 중 오류") && !resultPhone.startsWith("해당 유저")) {
-            builder.append("&phoneNum$").append(resultPhone);
-        } else {
-            builder.append("&error$").append(resultPhone); // 오류 메시지도 전송
+        // 내 phoneNum 조회
+        String myPhone = db.getPhoneNumById(myId);
+        if (myPhone == null) {
+            return "%ADDFRIEND%&error$내 정보(phoneNum)를 찾을 수 없습니다.%";
         }
-
-        builder.append("%");
-        return builder.toString();
+        // 상대 phoneNum 조회 (id 또는 phoneNum 입력 가능)
+        String targetPhone = db.getPhoneNumById(targetId);
+        if (targetPhone == null) {
+            targetPhone = targetId.matches("^01[0-9]{8,9}$") ? targetId : null;
+        }
+        if (targetPhone == null) {
+            return "%ADDFRIEND%&error$상대방 정보를 찾을 수 없습니다.%";
+        }
+        // 친구 정보 조회
+        String friendId = db.getIdByPhoneNum(targetPhone);
+        String friendName = null;
+        String friendProfileDir = null;
+        try (java.sql.Connection conn = db.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement("SELECT name, profileDir FROM UserData WHERE phoneNum = ? LIMIT 1")) {
+            pstmt.setString(1, targetPhone);
+            java.sql.ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                friendName = rs.getString("name");
+                friendProfileDir = rs.getString("profileDir");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        // 친구 관계 저장
+        boolean ok = db.setFriendData(myPhone, targetPhone);
+        if (ok) {
+            return String.format("%%ADDFRIEND%%&phoneNum$%s&friendId$%s&friendName$%s&friendProfileDir$%s%%", targetPhone, friendId, friendName, friendProfileDir);
+        } else {
+            return "%ADDFRIEND%&error$이미 친구이거나 DB 오류입니다.%";
+        }
     }
 
 }

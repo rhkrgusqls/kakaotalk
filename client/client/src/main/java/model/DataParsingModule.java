@@ -48,6 +48,8 @@ public class DataParsingModule {
                 }
             }
         }
+        // phoneNum 파싱 결과 로그
+        System.out.println("[DEBUG] DataParsingModule.parseData() phoneNum=" + phoneNum);
     }
 
 

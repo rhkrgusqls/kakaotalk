@@ -96,11 +96,14 @@ public class ParsingController {
                 // Chat은 실시간 전송 후 DB 저장만 하므로, 여기서는 별도의 응답을 주지 않음
                 return ""; // 성공했다는 의미로 ACK(Acknowledge) 응답을 보내거나 빈 문자열 반환
             case "ADDFRIEND":
-                // id와 phoneNum은 DataStruct에 배열로 담겨있음, 보통 한개씩
-                if (data.id != null && data.id.length > 0 && data.phoneNum != null && data.phoneNum.length > 0) {
-                    return mainController.addFriend(senderId,data.id[0],data.phoneNum[0]);
+                // myId, targetId 파싱
+                Map<String, String> addFriendMap = extractDataToMap(input);
+                String myId = addFriendMap.get("myId");
+                String targetId = addFriendMap.get("targetId");
+                if (myId != null && targetId != null) {
+                    return mainController.addFriend(myId, targetId);
                 } else {
-                    return "%Error%&message$id or phoneNum missing for ADDFRIEND%";
+                    return "%Error%&message$myId or targetId missing for ADDFRIEND%";
                 }
             case "LoadChatRoomData":
             	if (data.id != null && data.id.length > 0) {

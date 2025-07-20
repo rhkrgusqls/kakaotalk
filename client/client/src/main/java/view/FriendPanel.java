@@ -3,6 +3,12 @@ package view;
 import javax.swing.*;
 import java.awt.*;
 import model.User;
+import model.DBManager;
+import model.Friend;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import model.ChatRoom;
+import java.util.List;
 
 public class FriendPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -11,6 +17,42 @@ public class FriendPanel extends JPanel {
     public JButton addFriendsBtn;
     public JTextField friendSearchBar;
     public JList friendList;
+
+    public void refreshFriendList() {
+        DBManager db = DBManager.getInstance();
+        System.out.println("[DEBUG] FriendPanel DB: " + db.getCurrentDBName());
+        java.util.List<String> friends = db.loadFriendList();
+        DefaultListModel<Friend> friendModel = new DefaultListModel<>();
+        for (String phone : friends) {
+            // 이름/프로필은 UserData에서 phoneNum으로 조회
+            String name = phone;
+            String profileDir = null;
+            try (java.sql.Connection conn = db.getConnection();
+                 java.sql.PreparedStatement pstmt = conn.prepareStatement("SELECT name, profileDir FROM UserData WHERE phoneNum = ? LIMIT 1")) {
+                pstmt.setString(1, phone);
+                java.sql.ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    name = rs.getString("name");
+                    profileDir = rs.getString("profileDir");
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+            byte[] profileBytes = null;
+            if (profileDir != null) {
+                try {
+                    java.nio.file.Path path = java.nio.file.Paths.get(profileDir);
+                    if (java.nio.file.Files.exists(path)) {
+                        profileBytes = java.nio.file.Files.readAllBytes(path);
+                    }
+                } catch (Exception ex) { /* ignore */ }
+            }
+            if (name == null || name.isEmpty()) name = phone;
+            friendModel.addElement(new Friend(0, phone, name, profileBytes));
+        }
+        friendList.setModel(friendModel);
+        friendList.setCellRenderer(new FriendCellRenderer());
+        friendList.revalidate();
+        friendList.repaint();
+    }
 
     public FriendPanel(User loggedInUser) {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -85,9 +127,11 @@ public class FriendPanel extends JPanel {
         profilePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         profilePanel.add(profileIcon);
         profilePanel.add(nameLabel);
-
-        // 이 패널의 크기만큼 간격 유지
-        add(profilePanel);
+        // FlowLayout(LEFT)로 감싸서 진짜 왼쪽 정렬
+        JPanel profileWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        profileWrapper.setOpaque(false);
+        profileWrapper.add(profilePanel);
+        add(profileWrapper);
         add(Box.createRigidArea(new Dimension(0, 12)));
 
         // 친구 리스트 영역
@@ -97,5 +141,83 @@ public class FriendPanel extends JPanel {
         friendPanel.add(new JLabel("친구"), BorderLayout.NORTH);
         friendPanel.add(new JScrollPane(friendList), BorderLayout.CENTER);
         this.add(friendPanel);
+
+        // --- 친구 목록 불러와서 JList에 표시 (이름+아이콘) ---
+        refreshFriendList();
+
+        // 더블클릭 시 1:1 채팅방 진입
+        friendList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = friendList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        Friend friend = (Friend) friendList.getModel().getElementAt(index);
+                        openOneToOneChatRoom(friend);
+                    }
+                }
+            }
+        });
+    }
+
+    // 1:1 채팅방 진입 로직 (채팅방 존재 여부 확인 후 오픈)
+    private void openOneToOneChatRoom(Friend friend) {
+        // 1:1 채팅방 존재 여부 확인 (ChatRoomList에서 상대 id 포함된 1:1 채팅방 검색)
+        DBManager db = DBManager.getInstance();
+        List<ChatRoom> chatRooms = db.loadChatRooms();
+        ChatRoom found = null;
+        for (ChatRoom room : chatRooms) {
+            if ("1:1".equals(room.getRoomType()) && room.getRoomName().contains(friend.id)) {
+                found = room;
+                break;
+            }
+        }
+        if (found == null) {
+            found = new ChatRoom();
+            found.setRoomType("1:1");
+            found.setRoomName(friend.name + "와의 1:1 채팅");
+            // chatRoomNum 자동 할당
+            int maxNum = 0;
+            for (ChatRoom r : chatRooms) {
+                if (r.getChatRoomNum() > maxNum) maxNum = r.getChatRoomNum();
+            }
+            found.setChatRoomNum(maxNum + 1);
+            db.saveChatRoom(found);
+        }
+        // 메인 프레임의 ChatRoomPanel에서 채팅창 열기
+        view.Base.getInstance().getChatRoomPanel().openChatRoomWindow(new String[]{found.getRoomName(), "최근 메시지", "./profile/chatRoom/test.jpg"});
+    }
+
+    // 이름+아이콘으로 친구를 표시하는 셀 렌더러
+    class FriendCellRenderer extends JPanel implements ListCellRenderer<Friend> {
+        private JLabel iconLabel = new JLabel();
+        private JLabel nameLabel = new JLabel();
+        public FriendCellRenderer() {
+            setLayout(new BorderLayout(5, 5));
+            add(iconLabel, BorderLayout.WEST);
+            add(nameLabel, BorderLayout.CENTER);
+            setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        }
+        @Override
+        public Component getListCellRendererComponent(JList<? extends Friend> list, Friend friend, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            nameLabel.setText(friend.name);
+            // 프로필 이미지가 있으면 표시, 없으면 기본
+            if (friend.profileImageBytes != null) {
+                ImageIcon icon = new ImageIcon(friend.profileImageBytes);
+                Image scaled = icon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                iconLabel.setIcon(new ImageIcon(scaled));
+            } else {
+                iconLabel.setIcon(null);
+            }
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            } else {
+                setBackground(list.getBackground());
+                setForeground(list.getForeground());
+            }
+            return this;
+        }
     }
 }

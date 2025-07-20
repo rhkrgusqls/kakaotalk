@@ -77,8 +77,8 @@ public class RegisterFrame extends JFrame {
             );
             String response = TCPManager.getInstance().sendSyncMessage(registerMsg);
             if (response != null && response.contains("success$true")) {
-                JOptionPane.showMessageDialog(this, name +"님 회원가입 완료되었습니다!");
-                dispose();
+            JOptionPane.showMessageDialog(this, name +"님 회원가입 완료되었습니다!");
+            dispose();
             } else if (response != null && response.contains("success$false")) {
                 JOptionPane.showMessageDialog(this, "이미 존재하는 아이디입니다.", "중복오류", JOptionPane.WARNING_MESSAGE);
             } else {

@@ -106,7 +106,11 @@ public class AddFriendFrame extends JFrame {
                 return;
             }
             JOptionPane.showMessageDialog(this, "'" + input + "'님을 추가합니다.");
-            MainController.addFriend(input);
+            boolean success = controller.MainController.addFriend(input);
+            if (success) {
+                // 친구 추가 성공 시 친구 목록 새로고침 (싱글턴 Base 사용)
+                view.Base.getInstance().getFriendPanel().refreshFriendList();
+            }
             dispose();
         });
 
