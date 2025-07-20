@@ -17,7 +17,7 @@ public class DBManager {
     
     private final String DATA_BASE_IP = "34.47.125.114";
     private final int DATA_BASE_PORT = 3306;
-    private final String DB_NAME = "kakaotalkUser1TestData";
+    private final String DB_NAME = "kakaotalk";
     private final String DB_USER = "root";
     private final String DB_PASSWORD = "QWER1234!";
 
@@ -42,8 +42,21 @@ public class DBManager {
     }
 
     public void saveUser(User user) {
+        // FriendList 참조 데이터 삭제 (제약 위반 방지)
+        String deleteFriendSql = "DELETE FROM FriendList WHERE userPhone1 = (SELECT phoneNum FROM UserData WHERE id = ?) OR userPhone2 = (SELECT phoneNum FROM UserData WHERE id = ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement deleteFriendPstmt = conn.prepareStatement(deleteFriendSql)) {
+            deleteFriendPstmt.setString(1, user.getId());
+            deleteFriendPstmt.setString(2, user.getId());
+            deleteFriendPstmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         String deleteSql = "DELETE FROM UserData WHERE id = ?";
+
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
+
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
@@ -168,6 +181,40 @@ public class DBManager {
             e.printStackTrace();
         }
         return list;
+    }
+    public List<ChatRoom> loadChatRoomsForUser(String userId) {
+        List<ChatRoom> list = new ArrayList<>();
+        String sql = "SELECT * FROM ChatRoomList WHERE userId = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ChatRoom room = new ChatRoom();
+                room.setChatRoomNum(rs.getInt("chatRoomNum"));
+                room.setRoomType(rs.getString("roomType"));
+                room.setRoomName(rs.getString("roomName"));
+                list.add(room);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public String loadLastMessageForRoom(int roomNum) {
+        String sql = "SELECT text FROM ChatList WHERE chatRoomNum = ? ORDER BY time DESC LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, roomNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("text");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "메시지 없음";  // 기본값
     }
 }
 

@@ -3,6 +3,10 @@ package view;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import controller.MainController;
+import model.ChatRoom;
+import model.DBManager;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -13,7 +17,6 @@ public class ChatRoomPanel extends JPanel {
 	public JButton searchBtn;
 	public JButton searchOpenChatBtn;
 	public JButton addChatRoomBtn;
-	public JList myPf;
 	public JList chatList;
 	public JTextField chatRoomSearchBar;
 
@@ -61,16 +64,26 @@ public class ChatRoomPanel extends JPanel {
 		});
 		searchPanel.add(addChatRoomBtn);
 		this.add(searchPanel);
-		
-		// 10개의 더미 데이터 생성
-        String[][] dummyData = new String[10][3];
-        for (int i = 0; i < 10; i++) {
-            dummyData[i][0] = "채팅방 " + (i + 1);               // 상단 라벨 텍스트
-            dummyData[i][1] = "최근 메시지 미리보기 " + (i + 1);  // 하단 라벨 텍스트
-            dummyData[i][2] = "./profile/chatRoom/test.jpg";                 // 아이콘 이미지 경로
+//		
+//		// 10개의 더미 데이터 생성
+//        String[][] dummyData = new String[10][3];
+//        for (int i = 0; i < 10; i++) {
+//            dummyData[i][0] = "채팅방 " + (i + 1);               // 상단 라벨 텍스트
+//            dummyData[i][1] = "최근 메시지 미리보기 " + (i + 1);  // 하단 라벨 텍스트
+//            dummyData[i][2] = "./profile/chatRoom/test.jpg";                 // 아이콘 이미지 경로
+//        }
+		DBManager db = new DBManager();
+		String userId = MainController.getLoggedInUser().getId();
+		java.util.List<ChatRoom> rooms = db.loadChatRoomsForUser(userId);
+		// DB 데이터를 JList 형식으로 변환
+        String[][] chatData = new String[rooms.size()][3];
+        for (int i = 0; i < rooms.size(); i++) {
+            ChatRoom room = rooms.get(i);
+            chatData[i][0] = room.getRoomName();  // 채팅방 이름
+            chatData[i][1] = db.loadLastMessageForRoom(room.getChatRoomNum());  // 최근 메시지
+            chatData[i][2] = "./profile/chatRoom/test.jpg";  // 이미지 경로 (TODO: 실제 경로)
         }
-
-        chatList = new JList<>(dummyData);
+        chatList = new JList<>(chatData);
         chatList.setCellRenderer(new ChatRoomCellRenderer());
         chatList.setFixedCellHeight(70);
         chatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
