@@ -17,13 +17,20 @@ public class DBManager {
     
     private final String DATA_BASE_IP = "34.47.125.114";
     private final int DATA_BASE_PORT = 3306;
-    private final String DB_NAME = "kakaotalk";
+    private final String DB_NAME = "kakaotalkUser1TestData";
     private final String DB_USER = "root";
     private final String DB_PASSWORD = "QWER1234!";
 
     private Connection getConnection() throws Exception {
         String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + DB_NAME +
                      "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
+        
+        // 운영 DB 접속 시 프로그램 종료
+        if (DB_NAME.equals("kakaotalk")) {
+            System.err.println("[ERROR] Access to production database 'kakaotalk' is forbidden from client.");
+            System.exit(1); // 프로그램 즉시 종료
+        }
+
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
     }
 
@@ -66,16 +73,6 @@ public class DBManager {
     }
     
     public void saveUser(User user) {
-        // FriendList 참조 데이터 삭제 (제약 위반 방지)
-        String deleteFriendSql = "DELETE FROM FriendList WHERE userPhone1 = (SELECT phoneNum FROM UserData WHERE id = ?) OR userPhone2 = (SELECT phoneNum FROM UserData WHERE id = ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement deleteFriendPstmt = conn.prepareStatement(deleteFriendSql)) {
-            deleteFriendPstmt.setString(1, user.getId());
-            deleteFriendPstmt.setString(2, user.getId());
-            deleteFriendPstmt.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
 
