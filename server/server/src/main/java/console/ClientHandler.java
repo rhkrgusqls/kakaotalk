@@ -32,12 +32,12 @@ public class ClientHandler extends Thread {
             while ((inputLine = in.readLine()) != null) {
                 System.out.println("클라이언트(" + this.userId + " / connId:" + connectionId + ")에게 받은 메시지: " + inputLine);
                 
-                // [요구사항 반영] 이벤트 1: 클라이언트가 보낸 메시지에 "수신받음"을 더해 응답
-                System.out.println(inputLine + " 수신받음!");
+                String uuid = extractUUID(inputLine);
+                System.out.println("추출된 UUID: " + uuid);
+                System.out.println(inputLine + " 전송");
                 
                 String response = ParsingController.controllerHandle(inputLine);
-                out.println();
-                out.println(response);
+                out.println(response+"&uuid$"+uuid);
 //                switch (opcode) {
 //                case "Login":
 //                    // --- 테스트를 위한 임시 수정 ---
@@ -87,6 +87,33 @@ public class ClientHandler extends Thread {
         }
     }
 
+    
+    public static String extractUUID(String message) {
+        if (message == null) return null;
+
+        int idx = message.indexOf("&uuid$");
+        if (idx == -1) return null;
+
+        String afterUuid = message.substring(idx + 6); // "a1c2...fcb%..."
+        int endIdx = afterUuid.indexOf("&");
+        int percentIdx = afterUuid.indexOf("%");
+
+        // 다음 & 또는 % 기호 전까지 자르기
+        int cutIdx;
+        if (endIdx == -1 && percentIdx == -1) {
+            cutIdx = afterUuid.length(); // 끝까지
+        } else if (endIdx == -1) {
+            cutIdx = percentIdx;
+        } else if (percentIdx == -1) {
+            cutIdx = endIdx;
+        } else {
+            cutIdx = Math.min(endIdx, percentIdx);
+        }
+
+        return afterUuid.substring(0, cutIdx);
+    }
+
+    
     public void sendMessage(String message) {
         if (out != null) { out.println(message); }
     }
