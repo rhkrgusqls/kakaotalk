@@ -27,6 +27,30 @@ public class DBManager {
         return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
     }
 
+    public User getLoggedInUser() {
+        String selectSql = "SELECT id, password, name, profileDir FROM UserData LIMIT 1";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(selectSql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                String id = rs.getString("id");
+                String password = rs.getString("password");
+                String name = rs.getString("name");
+                String profileDir = rs.getString("profileDir");
+
+                return new User(id, password, name, profileDir);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 데이터가 없으면 빈 User 반환 혹은 null 반환 선택 가능
+        return null;
+    }
+
+    
     public String loadPhoneNum() {
         String sql = "SELECT phoneNum FROM PhoneData LIMIT 1";
         try (Connection conn = getConnection();
@@ -40,8 +64,9 @@ public class DBManager {
         }
         return null;
     }
-
+    
     public void saveUser(User user) {
+<<<<<<< HEAD
         // FriendList 참조 데이터 삭제 (제약 위반 방지)
         String deleteFriendSql = "DELETE FROM FriendList WHERE userPhone1 = (SELECT phoneNum FROM UserData WHERE id = ?) OR userPhone2 = (SELECT phoneNum FROM UserData WHERE id = ?)";
         try (Connection conn = getConnection();
@@ -55,13 +80,15 @@ public class DBManager {
 
         String deleteSql = "DELETE FROM UserData WHERE id = ?";
 
+=======
+        String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
+>>>>>>> 75cd539ced44559ee29b4b8972fbb45b14f57bf0
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
             try (PreparedStatement deletePstmt = conn.prepareStatement(deleteSql)) {
-                deletePstmt.setString(1, user.getId());
                 deletePstmt.executeUpdate();
             }
 
@@ -78,7 +105,7 @@ public class DBManager {
             e.printStackTrace();
         }
     }
-    
+
     public void deleteUsers() {
         String sql = "DELETE FROM UserData";
         try (Connection conn = getConnection();
