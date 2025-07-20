@@ -78,4 +78,28 @@ public class MainController implements Observer {
         }
         return null;
     }
+    
+    public static boolean addFriend(String idOrPhone) {
+        DBManager db = new DBManager();
+        
+        DataParsingModule data = new DataParsingModule();
+        if (tcp.isConnected()) {
+            System.out.println("TCP 연결 성공! 로그인 메시지를 보냅니다.");
+            String response = tcp.sendSyncMessage("%ADDFRIEND%&id$" + idOrPhone + "&phoneNum$" + idOrPhone + "%" + "&user$" + db.getLoggedInUser().getId()+ "%");
+            if (response != null) {
+                data.parseData(response);
+            } else {
+                System.err.println("[ERROR] 서버 응답이 null입니다.");
+                return false;
+            }
+        } else {
+            System.out.println("TCP 연결 실패!");
+            return false;
+        }
+        if (data.getPhoneNum() == null) {
+            return false;
+        }
+        db.saveFriend(data.getPhoneNum());
+        return true;
+    }
 }

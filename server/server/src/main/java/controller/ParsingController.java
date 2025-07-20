@@ -78,7 +78,7 @@ public class ParsingController {
     public static String controllerHandle(String input) {
         String opcode = extractOpcode(input);
         DataStruct data = extractData(input);
-        
+        String senderId = extractSenderUserId(input);
         // 데이터가 없는 경우를 대비한 방어 코드
         if (data.id == null || data.id.length == 0) {
             // 로그인 외 다른 요청들을 위해 opcode만 보고 분기할 수도 있음
@@ -95,7 +95,13 @@ public class ParsingController {
             case "Chat":
                 // Chat은 실시간 전송 후 DB 저장만 하므로, 여기서는 별도의 응답을 주지 않음
                 return ""; // 성공했다는 의미로 ACK(Acknowledge) 응답을 보내거나 빈 문자열 반환
-            
+            case "ADDFRIEND":
+                // id와 phoneNum은 DataStruct에 배열로 담겨있음, 보통 한개씩
+                if (data.id != null && data.id.length > 0 && data.phoneNum != null && data.phoneNum.length > 0) {
+                    return mainController.addFriend(senderId,data.id[0],data.phoneNum[0]);
+                } else {
+                    return "%Error%&message$id or phoneNum missing for ADDFRIEND%";
+                }
             // 여기에 친구 목록, 채팅방 목록 등 다른 OPCODE에 대한 처리를 추가
             // case "LoadFriendData":
             //     return mainController.getFriendListAsString(data.phoneNum[0]);
@@ -128,4 +134,31 @@ public class ParsingController {
         }
         return dataMap;
     }
+    
+    
+    public static String extractSenderUserId(String input) {
+        try {
+            int firstPercent = input.indexOf('%');
+            int secondPercent = input.indexOf('%', firstPercent + 1);
+            int lastPercent = input.lastIndexOf('%');
+            if (firstPercent == -1 || secondPercent == -1 || lastPercent == -1 || secondPercent >= lastPercent) {
+                return null;
+            }
+
+            // opcode 끝 다음부터 마지막 % 전까지 데이터 영역
+            String dataSection = input.substring(secondPercent + 1, lastPercent);
+
+            // 데이터 구간에서 &user$값 찾기
+            String[] entries = dataSection.split("&");
+            for (String entry : entries) {
+                if (entry.startsWith("user$")) {
+                    return entry.substring("user$".length());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("extractSenderUserId error: " + e.getMessage());
+        }
+        return null;
+    }
+    
 }

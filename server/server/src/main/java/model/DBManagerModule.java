@@ -328,4 +328,52 @@ public class DBManagerModule {
             return false;
         }
     }
+    
+    public String addFriend(String userId, String id, String phoneNum) {
+        String targetPhone = null;
+        String myPhone = null;
+
+        String findTargetPhoneSql = "SELECT phoneNum FROM UserData WHERE id = ? OR phoneNum = ?";
+        String findMyPhoneSql = "SELECT phoneNum FROM UserData WHERE id = ?";
+        String insertFriendSql = "INSERT INTO FriendList(userPhone1, userPhone2) VALUES (?, ?)";
+
+        try (Connection conn = getConnection()) {
+            // 대상 유저의 phoneNum 조회
+            try (PreparedStatement stmt = conn.prepareStatement(findTargetPhoneSql)) {
+                stmt.setString(1, id);
+                stmt.setString(2, phoneNum);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    targetPhone = rs.getString("phoneNum");
+                } else {
+                    return "해당 유저를 찾을 수 없습니다.";
+                }
+            }
+
+            // 요청자 본인의 phoneNum 조회
+            try (PreparedStatement stmt = conn.prepareStatement(findMyPhoneSql)) {
+                stmt.setString(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    myPhone = rs.getString("phoneNum");
+                } else {
+                    return "요청자 유저 정보를 찾을 수 없습니다.";
+                }
+            }
+
+            // 친구 관계 삽입
+            try (PreparedStatement stmt = conn.prepareStatement(insertFriendSql)) {
+                stmt.setString(1, myPhone);
+                stmt.setString(2, targetPhone);
+                stmt.executeUpdate();
+            }
+
+            return targetPhone;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "DB 처리 중 오류 발생: " + e.getMessage();
+        }
+    }
+
 }
