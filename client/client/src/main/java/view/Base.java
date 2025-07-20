@@ -1,9 +1,13 @@
 package view;
 import java.awt.*;
 import javax.swing.*;
+
+import controller.MainController;
+
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.io.File;
+import model.User;
 
 public class Base extends JFrame implements ActionListener{
 	private static final long serialVersionUID = 1L;
@@ -275,9 +279,14 @@ public class Base extends JFrame implements ActionListener{
 		basePanel.removeAll();
 		switch(type) {
 		case 0:
-			friendPanel = new FriendPanel();
-			basePanel.add(friendPanel); //친구창 붙여넣기
-			basePanel.revalidate();
+            User loggedInUser = MainController.getLoggedInUser();
+            if (loggedInUser == null) {
+            	JOptionPane.showMessageDialog(this, "로그인 정보가 없습니다. 앱을 다시 시작해주세요.", "오류", JOptionPane.ERROR_MESSAGE);
+                return; 
+            }
+            friendPanel = new FriendPanel(loggedInUser);
+            basePanel.add(friendPanel);
+            basePanel.revalidate();
 			basePanel.repaint();
 			break;
 		case 1:
