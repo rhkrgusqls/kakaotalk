@@ -1,29 +1,28 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
 import java.util.List;
-import javax.swing.border.TitledBorder;
 
 public class AddChatRoomFrame extends JFrame {
 
-    private Point initialClick; // 드래그 시작점 저장용
+    private Point initialClick;
 
     public AddChatRoomFrame() {
-        // 프레임 기본 설정
         setTitle("채팅방 생성");
-        setUndecorated(true); // 타이틀 바 제거
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 현재 창만 닫기
-        setSize(550, 450);
-        setLocationRelativeTo(null); // 화면 중앙에 배치
+        setUndecorated(true);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(350, 600);
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.WHITE); // 프레임 배경 흰색
+        getContentPane().setBackground(Color.WHITE);
 
-        // 프레임 모서리를 둥글게 처리
         addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
@@ -31,7 +30,7 @@ public class AddChatRoomFrame extends JFrame {
             }
         });
 
-        // 1. 상단 드래그 및 타이틀 영역 패널
+        // 상단 드래그 및 타이틀 영역 패널
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Color.WHITE);
         JLabel titleLabel = new JLabel("채팅방 생성");
@@ -39,7 +38,6 @@ public class AddChatRoomFrame extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 0));
         topPanel.add(titleLabel, BorderLayout.WEST);
 
-        // 드래그 기능 추가
         topPanel.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 initialClick = e.getPoint();
@@ -55,11 +53,10 @@ public class AddChatRoomFrame extends JFrame {
         });
         add(topPanel, BorderLayout.NORTH);
 
-        // 2. 탭 패널
+        // 탭 패널
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setBackground(Color.WHITE);
 
-        // 각 탭에 들어갈 패널 생성
         JPanel oneToOnePanel = createCreationPanel("1:1");
         JPanel teamPanel = createCreationPanel("팀");
         JPanel openPanel = createCreationPanel("오픈");
@@ -71,98 +68,66 @@ public class AddChatRoomFrame extends JFrame {
         add(tabbedPane, BorderLayout.CENTER);
     }
 
-    /**
-     * 채팅방 타입에 따라 친구/참여자 목록 패널을 생성하는 메서드
-     * @param type "1:1", "팀", "오픈" 중 하나
-     * @return 완성된 패널
-     */
     private JPanel createCreationPanel(String type) {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --- 친구 목록 ---
-        DefaultListModel<String> friendListModel = new DefaultListModel<>();
+        // 체크박스 기능이 있는 친구 목록
+        DefaultListModel<FriendCheckboxItem> friendListModel = new DefaultListModel<>();
+
+        // =========================================================================
+        // TODO 1: 친구 목록 로딩 (DB 연동)
+        // 현재는 더미 데이터(친구 1~10)를 사용하고 있습니다.
+        // 추후 이 부분을 DB에서 실제 친구 목록을 불러오는 로직으로 변경해야 합니다.
+        // 예를 들어, `List<UserDTO> friends = userDao.getFriendList(currentUserId);` 와 같은 형태가 될 것입니다.
+        // 가져온 친구 목록을 순회하며 `friendListModel.addElement()`를 호출해야 합니다.
         for (int i = 1; i <= 10; i++) {
-            friendListModel.addElement("친구 " + i);
+            // UserDTO에서 친구의 이름이나 닉네임을 가져와 FriendCheckboxItem을 생성합니다.
+            // new FriendCheckboxItem("친구 " + i) -> new FriendCheckboxItem(friend.getNickname(), friend.getId())
+            friendListModel.addElement(new FriendCheckboxItem("친구 " + i));
         }
-        JList<String> friendList = new JList<>(friendListModel);
+        // =========================================================================
+        
+        JList<FriendCheckboxItem> friendList = new JList<>(friendListModel);
+        friendList.setCellRenderer(new CheckboxListRenderer());
+        friendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         friendList.setBackground(Color.WHITE);
 
-        if ("1:1".equals(type)) {
-            friendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        } else {
-            friendList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        }
+        friendList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int index = friendList.locationToIndex(e.getPoint());
+                if (index != -1) {
+                    FriendCheckboxItem clickedItem = friendListModel.getElementAt(index);
+                    boolean isGoingToBeSelected = !clickedItem.isSelected();
+                    // "1:1" 탭이고, 새로운 항목을 "선택"하려는 경우에만
+                    if ("1:1".equals(type) && isGoingToBeSelected) {
+                        // 다른 모든 항목을 우선 선택 해제한다.
+                        for (int i = 0; i < friendListModel.getSize(); i++) {
+                            friendListModel.getElementAt(i).setSelected(false);
+                        }
+                    }
+                    // 최종적으로 현재 클릭한 아이템의 상태를 토글한다.
+                    clickedItem.setSelected(isGoingToBeSelected);
+                    // JList 전체를 다시 그려서 모든 변경사항(해제된 항목 포함)을 반영한다.
+                    friendList.repaint();
+                }
+            }
+        });
 
         JScrollPane friendScrollPane = new JScrollPane(friendList);
-        friendScrollPane.setBorder(new TitledBorder("친구 목록"));
-        friendScrollPane.getViewport().setBackground(Color.WHITE); // 스크롤패인 배경 흰색
-
-        // --- 참여자 목록 ---
-        DefaultListModel<String> participantListModel = new DefaultListModel<>();
-        JList<String> participantList = new JList<>(participantListModel);
-        participantList.setBackground(Color.WHITE);
-        JScrollPane participantScrollPane = new JScrollPane(participantList);
-        participantScrollPane.setBorder(new TitledBorder("참여자"));
-        participantScrollPane.getViewport().setBackground(Color.WHITE);
-
-        // --- 중앙 버튼 (친구 추가/제거) ---
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        buttonPanel.setBackground(Color.WHITE);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 0, 5, 0);
-
-        JButton addButton = new JButton(">>");
-        addButton.setContentAreaFilled(false);
-        JButton removeButton = new JButton("<<");
-        removeButton.setContentAreaFilled(false);
+        friendScrollPane.setBorder(new TitledBorder("친구 목록 (참여할 친구 선택)"));
+        friendScrollPane.getViewport().setBackground(Color.WHITE);
+        mainPanel.add(friendScrollPane, BorderLayout.CENTER);
         
-        gbc.gridy = 0;
-        buttonPanel.add(addButton, gbc);
-        gbc.gridy = 1;
-        buttonPanel.add(removeButton, gbc);
-
-        addButton.addActionListener(e -> {
-            List<String> selectedFriends = friendList.getSelectedValuesList();
-            if ("1:1".equals(type) && !selectedFriends.isEmpty()) {
-                if (participantListModel.getSize() > 0) {
-                    JOptionPane.showMessageDialog(this, "1:1 채팅방에는 한 명만 초대할 수 있습니다.", "알림", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                participantListModel.addElement(selectedFriends.get(0));
-                friendListModel.removeElement(selectedFriends.get(0));
-            } else {
-                for (String friend : selectedFriends) {
-                    participantListModel.addElement(friend);
-                    friendListModel.removeElement(friend);
-                }
-            }
-        });
-
-        removeButton.addActionListener(e -> {
-            List<String> selectedParticipants = participantList.getSelectedValuesList();
-            for (String participant : selectedParticipants) {
-                friendListModel.addElement(participant);
-                participantListModel.removeElement(participant);
-            }
-        });
-
-        JPanel centerPanel = new JPanel(new GridLayout(1, 3, 10, 10));
-        centerPanel.setBackground(Color.WHITE);
-        centerPanel.add(friendScrollPane);
-        centerPanel.add(buttonPanel);
-        centerPanel.add(participantScrollPane);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-
-        // --- 하단 버튼 (방 생성, 취소) ---
+        // 하단 버튼 (방 생성, 취소)
         JPanel bottomButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomButtonPanel.setBackground(Color.WHITE);
         JButton createButton = new JButton("방 생성");
         JButton cancelButton = new JButton("취소");
         cancelButton.setContentAreaFilled(false);
 
-        // "방 생성" 버튼 스타일 적용
         createButton.setBackground(new Color(0xFEE500));
         createButton.setOpaque(true);
         createButton.setBorderPainted(false);
@@ -173,19 +138,72 @@ public class AddChatRoomFrame extends JFrame {
         bottomButtonPanel.add(cancelButton);
         mainPanel.add(bottomButtonPanel, BorderLayout.SOUTH);
 
-        // TODO: 방 생성 이벤트 (실제 로직 구현 필요)
         createButton.addActionListener(e -> {
-            if (participantListModel.isEmpty()) {
+            List<String> selectedFriendNames = new ArrayList<>();
+            // List<Integer> selectedFriendIds = new ArrayList<>(); // 이름 대신 ID를 수집
+            for (int i = 0; i < friendListModel.getSize(); i++) {
+                FriendCheckboxItem item = friendListModel.getElementAt(i);
+                if (item.isSelected()) {
+                    selectedFriendNames.add(item.getName());
+                    // selectedFriendIds.add(item.getId());
+                }
+            }
+
+            if (selectedFriendNames.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "참여자를 선택해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String message = String.format("'%s' 타입의 채팅방을 생성합니다.\n참여자: %s", type, participantListModel.toString());
+
+            // =========================================================================
+            // TODO 2: 채팅방 생성 로직 (서버/DB 연동)
+            // 현재는 선택된 친구 목록을 단순히 메시지 박스로 보여주고 창을 닫습니다.
+            // 추후 이 부분을 실제 채팅방 생성 요청을 보내는 로직으로 변경
+            // 1. 선택된 친구들의 정보(ID 리스트 등)와 채팅방 타입(type)을 DTO에 담습니다.
+            // 2. 컨트롤러(또는 서비스)에 해당 DTO를 전달하여 채팅방 생성을 요청
+            // 3. 생성되면 이 창을 닫고(dispose()), 채팅방 목록을 갱신
+            String message = String.format("'%s' 타입의 채팅방을 생성합니다.\n참여자: %s", type, selectedFriendNames.toString());
             JOptionPane.showMessageDialog(this, message);
             dispose();
+            // =========================================================================
         });
 
         cancelButton.addActionListener(e -> dispose());
-
         return mainPanel;
+    }
+
+    // JList 아이템 데이터 모델 클래스
+    class FriendCheckboxItem {
+        private final String name;
+        // private final int userId; // 예: DB의 사용자 ID
+        private boolean selected;
+
+        public FriendCheckboxItem(String name) {
+            this.name = name;
+            // this.userId = userId;
+            this.selected = false;
+        }
+
+        public boolean isSelected() { return selected; }
+        public void setSelected(boolean selected) { this.selected = selected; }
+        public String getName() { return name; }
+        // public int getId() { return userId; }
+    }
+
+    // JList를 체크박스 형태로 보여주는 렌더러 클래스
+    class CheckboxListRenderer extends JCheckBox implements ListCellRenderer<FriendCheckboxItem> {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends FriendCheckboxItem> list, FriendCheckboxItem value, int index, boolean isSelected, boolean cellHasFocus) {
+            setEnabled(list.isEnabled());
+            setSelected(value.isSelected());
+            setFont(list.getFont());
+            setBackground(list.getBackground());
+            setForeground(list.getForeground());
+            setText(value.getName());
+            if (isSelected) {
+                setBackground(list.getSelectionBackground());
+                setForeground(list.getSelectionForeground());
+            }
+            return this;
+        }
     }
 }
