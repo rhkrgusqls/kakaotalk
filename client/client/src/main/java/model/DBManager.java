@@ -66,7 +66,6 @@ public class DBManager {
     }
     
     public void saveUser(User user) {
-<<<<<<< HEAD
         // FriendList 참조 데이터 삭제 (제약 위반 방지)
         String deleteFriendSql = "DELETE FROM FriendList WHERE userPhone1 = (SELECT phoneNum FROM UserData WHERE id = ?) OR userPhone2 = (SELECT phoneNum FROM UserData WHERE id = ?)";
         try (Connection conn = getConnection();
@@ -77,12 +76,7 @@ public class DBManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        String deleteSql = "DELETE FROM UserData WHERE id = ?";
-
-=======
         String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
->>>>>>> 75cd539ced44559ee29b4b8972fbb45b14f57bf0
         String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = getConnection()) {
