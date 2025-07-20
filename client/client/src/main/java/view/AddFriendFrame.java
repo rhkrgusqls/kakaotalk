@@ -1,6 +1,9 @@
 package view;
 
 import javax.swing.*;
+
+import controller.MainController;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -102,7 +105,8 @@ public class AddFriendFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "ID 또는 전화번호를 입력하세요.", "알림", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            JOptionPane.showMessageDialog(this, "'" + input + "'님을 추가합니다. (로직 구현 필요)");
+            JOptionPane.showMessageDialog(this, "'" + input + "'님을 추가합니다.");
+            MainController.addFriend(input);
             dispose();
         });
 

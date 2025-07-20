@@ -136,4 +136,22 @@ public class mainController {
             System.err.println("채팅방 번호 변환 오류: " + chatRoomNum);
         }
     }
+    
+    public static String addFriend(String userId, String id, String phoneNum) {
+        DBManagerModule db = new DBManagerModule();
+        String resultPhone = db.addFriend(userId, id, phoneNum);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("%ADDFRIEND%");
+        
+        if (resultPhone != null && !resultPhone.startsWith("DB 처리 중 오류") && !resultPhone.startsWith("해당 유저")) {
+            builder.append("&phoneNum$").append(resultPhone);
+        } else {
+            builder.append("&error$").append(resultPhone); // 오류 메시지도 전송
+        }
+
+        builder.append("%");
+        return builder.toString();
+    }
+
 }
