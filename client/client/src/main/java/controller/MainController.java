@@ -6,6 +6,7 @@ import model.TCPManager;
 import model.User;
 
 public class MainController {
+	private static User loggedInUser; // 로그인한 사용자 정보를 저장할 static 변수
 	static TCPManager tcp;
 	static MainController instance = new MainController();
 	private MainController() {
@@ -29,9 +30,13 @@ public class MainController {
 			return false;
 		}
 	    User myData = new User(id, password, data.getUserName(), "./profile/self/coldplay.jpg");
+	    loggedInUser = myData;
 	    //ToDo:프로필을 파일저장하는 코드 생성
 		DBManager db = new DBManager(); 
 		db.saveUser(myData);
 	    return true;
 	}
+	public static User getLoggedInUser() {
+        return loggedInUser;
+    }
 }
