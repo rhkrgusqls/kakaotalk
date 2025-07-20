@@ -1,6 +1,8 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -94,33 +96,84 @@ public class ChatRoomPanel extends JPanel {
 	}
 	
 	private void openChatRoomWindow(String[] data) {
-	    JFrame chatWindow = new JFrame(data[0]); // 채팅방 이름
-	    chatWindow.setSize(400, 500);
+	    JFrame chatWindow = new JFrame(data[0]); 
+	    chatWindow.setSize(450, 600);
 	    chatWindow.setLocationRelativeTo(null);
 	    chatWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 독립된 창 닫기
+	    
+	    Color backgroundColor = Color.WHITE;
 
-	    JPanel chatingPanel = new JPanel();
-	    chatingPanel.setLayout(new BorderLayout());
+	    // 메인 컨테이너 패널
+	    JPanel mainContainerPanel = new JPanel(new BorderLayout());
+	    mainContainerPanel.setBackground(backgroundColor);
 
+	    // 채팅방 제목 레이블
 	    JLabel title = new JLabel(data[0], SwingConstants.CENTER);
 	    title.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+	    title.setOpaque(true); 
+	    title.setBackground(backgroundColor);
+	    title.setBorder(new EmptyBorder(10, 0, 10, 0));
 
-	    JTextArea messageArea = new JTextArea("여기에 메시지가 표시됩니다...");
-	    messageArea.setEditable(false);
-	    
-	    JPanel sendPanel = new JPanel(new BorderLayout(5, 0)); // 채팅창 아래 메시지입력 후 "전송"하는 패널
+	    // JSplitPane으로 채팅을 나눔
+
+	    // 왼쪽(상대방) 채팅 영역
+	    JTextArea otherUserChatArea = new JTextArea();
+	    otherUserChatArea.setEditable(false);
+	    otherUserChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+	    otherUserChatArea.setBackground(backgroundColor);
+	    otherUserChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
+	    // 예시 상대 내용 추가
+	    otherUserChatArea.append("안녕하세요!\n");
+	    otherUserChatArea.append("만나서 반갑습니다.\n");
+
+	    // 오른쪽(나) 채팅 영역
+	    JTextArea myChatArea = new JTextArea();
+	    myChatArea.setEditable(false);
+	    myChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+	    myChatArea.setBackground(backgroundColor);
+	    myChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
+	    // 예시 내 채팅 추가
+	    myChatArea.append("네, 안녕하세요!\n");
+
+	    // JSplitPane 생성 및 설정
+	    JSplitPane splitPane = new JSplitPane(
+	        JSplitPane.HORIZONTAL_SPLIT, // 좌우로 분할
+	        new JScrollPane(otherUserChatArea),
+	        new JScrollPane(myChatArea)
+	    );
+	    splitPane.setResizeWeight(0.5); // 양쪽 패널이 5:5 비율
+	    splitPane.setDividerSize(0);    // 구분선 두께
+	    splitPane.setBorder(null); 
+
+	    // JScrollPane의 배경색도 흰색으로 설정
+	    for (Component c : splitPane.getComponents()) {
+	        if (c instanceof JScrollPane) {
+	            ((JScrollPane) c).getViewport().setBackground(backgroundColor);
+	            ((JScrollPane) c).setBorder(null);
+	        }
+	    }
+
+	    // 하단 메시지 입력 및 전송 패널
+	    JPanel sendPanel = new JPanel(new BorderLayout(5, 0));
+	    sendPanel.setBackground(backgroundColor);
+	    sendPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
 	    JTextField messageInput = new JTextField();
 	    JButton send = new JButton("전송");
-	    //TODO : 이모티콘은 일단 제외하는 걸로 해요 
 	    sendPanel.add(messageInput, BorderLayout.CENTER);
 	    sendPanel.add(send, BorderLayout.EAST);
-	    
-	    chatingPanel.add(sendPanel, BorderLayout.SOUTH);
-	    chatingPanel.add(title, BorderLayout.NORTH);
-	    chatingPanel.add(new JScrollPane(messageArea), BorderLayout.CENTER);
 
-	    chatWindow.add(chatingPanel);
+	    // 메인 컨테이너에 컴포넌트들 최종 조립
+	    mainContainerPanel.add(title, BorderLayout.NORTH);
+	    mainContainerPanel.add(splitPane, BorderLayout.CENTER); // GridLayout 패널 대신 JSplitPane을 추가
+	    mainContainerPanel.add(sendPanel, BorderLayout.SOUTH);
+
+	    chatWindow.add(mainContainerPanel);
 	    chatWindow.setVisible(true);
-	}
 
+	    // splitPane이 화면에 표시된 후 divider 위치를 정확히 중앙으로 설정
+	    SwingUtilities.invokeLater(() -> {
+	        splitPane.setDividerLocation(0.5);
+	    });
 }
+	}
