@@ -1,5 +1,6 @@
 package observer;
 
+import model.Chat;
 import model.ChatRoom;
 
 import java.util.List;
@@ -27,6 +28,13 @@ public class ServerCallEventHandle {
         System.out.println("[LOG] notifyChatRoomListUpdated 호출! 옵저버 개수: " + observers.size() + ", 방 개수: " + rooms.size()); // [추가합니다] 디버깅용 로그
         for (Observer observer : observers) {
             observer.onChatRoomListUpdated(rooms);
+        }
+    }
+    
+    public static void notifyChatDataUpdated(int chatRoomNum, List<Chat> chats) {
+        System.out.println("[LOG] notifyChatDataUpdated 호출! 옵저버 개수: " + observers.size() + ", 채팅방 번호: " + chatRoomNum + ", 채팅 개수: " + chats.size());
+        for (Observer observer : observers) {
+            observer.onChatDataUpdated(chatRoomNum, chats);
         }
     }
 }

@@ -323,6 +323,21 @@ public class DBManagerModule {
         }
     }
     
+    public String getLastMessageForRoom(int chatRoomNum) {
+        String sql = "SELECT text FROM ChatList WHERE chatRoomNum = ? ORDER BY time DESC LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, chatRoomNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("text");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public String addFriend(String userId, String id, String phoneNum) {
         String targetPhone = null;
         String myPhone = null;
@@ -370,4 +385,89 @@ public class DBManagerModule {
         }
     }
 
+    // UserData에 해당 id가 이미 존재하는지 확인
+    public boolean isUserExists(String id) {
+        String sql = "SELECT COUNT(*) FROM UserData WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 회원정보를 UserData/PhoneData에 저장
+    public boolean insertUser(String id, String password, String name, String profileDir, String phoneNum) {
+        // 마스터 DB: UserData에 phoneNum까지 저장
+        String masterUserInsert = "INSERT INTO UserData(id, password, name, profileDir, phoneNum) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(masterUserInsert)) {
+                pstmt.setString(1, id);
+                pstmt.setString(2, password);
+                pstmt.setString(3, name);
+                pstmt.setString(4, profileDir);
+                pstmt.setString(5, phoneNum);
+                pstmt.executeUpdate();
+            }
+            conn.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        // 사용자별 DB(1~8) 중 비어있는 DB에만 저장
+        boolean saved = false;
+        for (int i = 1; i <= 8; i++) {
+            String userDbName = "kakaotalkUser" + i + "TestData";
+            String countSql = "SELECT COUNT(*) FROM UserData";
+            String userInsert = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
+            String phoneInsert = "INSERT INTO PhoneData(phoneNum, user_id) VALUES (?, ?)";
+            try (Connection userConn = getConnectionForDB(userDbName)) {
+                int count = 0;
+                try (PreparedStatement countPstmt = userConn.prepareStatement(countSql)) {
+                    ResultSet rs = countPstmt.executeQuery();
+                    if (rs.next()) count = rs.getInt(1);
+                }
+                if (count == 0) {
+                    userConn.setAutoCommit(false);
+                    try (PreparedStatement pstmt = userConn.prepareStatement(userInsert)) {
+                        pstmt.setString(1, id);
+                        pstmt.setString(2, password);
+                        pstmt.setString(3, name);
+                        pstmt.setString(4, profileDir);
+                        pstmt.executeUpdate();
+                    }
+                    try (PreparedStatement pstmt = userConn.prepareStatement(phoneInsert)) {
+                        pstmt.setString(1, phoneNum);
+                        pstmt.setString(2, id);
+                        pstmt.executeUpdate();
+                    }
+                    userConn.commit();
+                    saved = true;
+                    System.out.println(">> 내 정보 저장: " + userDbName + ", id=" + id);
+                    break;
+                }
+            } catch (Exception e) {
+                System.out.println(">> 사용자별 DB 저장 실패: " + userDbName + ", id=" + id);
+                e.printStackTrace();
+            }
+        }
+        if (!saved) {
+            System.out.println(">> 모든 사용자별 DB가 이미 회원으로 차 있음: id=" + id);
+            return false;
+        }
+        return true;
+    }
+
+    // DB 이름을 지정해서 커넥션 생성
+    private Connection getConnectionForDB(String dbName) throws Exception {
+        String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + dbName +
+                "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
+        return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
+    }
 }

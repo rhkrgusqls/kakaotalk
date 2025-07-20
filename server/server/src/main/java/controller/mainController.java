@@ -77,12 +77,17 @@ public class mainController {
 	}
 	
 	public static String register(String id, String password, String name, String profileDir, String phoneNum) {
-	    DBManagerModule db = new DBManagerModule();
-		if(db.isRegisteredUser(phoneNum)) {
-			return "%Register%&success$true";
-		}
-		return "%Register%&success$false";
-	}
+        DBManagerModule db = new DBManagerModule();
+        if (db.isUserExists(id)) {
+            return "%Register%&success$false%";
+        }
+        boolean ok = db.insertUser(id, password, name, profileDir, phoneNum);
+        if (ok) {
+            return "%Register%&success$true%";
+        } else {
+            return "%Register%&success$false%";
+        }
+    }
 	
 	public static String loadChatData(String chatRoom) {
 	    int roomNum = Integer.parseInt(chatRoom);
@@ -114,9 +119,13 @@ public class mainController {
         
         if (rooms != null) { // DB 조회 결과가 null이 아닌지 확인
             for (ChatRoomData room : rooms) {
+                // 각 채팅방의 최근 메시지도 함께 가져오기
+                String lastMessage = db.getLastMessageForRoom(room.chatRoomNum);
+                
                 builder.append("&chatRoomNum$").append(room.chatRoomNum)
                        .append("&roomType$").append(room.roomType)
-                       .append("&roomName$").append(room.roomName);
+                       .append("&roomName$").append(room.roomName)
+                       .append("&lastMessage$").append(lastMessage != null ? lastMessage : "메시지 없음");
             }
         }
         

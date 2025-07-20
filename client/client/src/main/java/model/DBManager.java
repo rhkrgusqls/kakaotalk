@@ -17,10 +17,60 @@ public class DBManager {
     
     private final String DATA_BASE_IP = "34.47.125.114";
     private final int DATA_BASE_PORT = 3306;
-//    private final String DB_NAME = "kakaotalk";
-    private final String DB_NAME = "kakaotalkUser1TestData";
+    private String DB_NAME = "kakaotalkUser1TestData";
     private final String DB_USER = "root";
     private final String DB_PASSWORD = "QWER1234!";
+
+    // 사용자 ID(예: 3)로 DB_NAME을 동적으로 변경
+    public void setUserDB(String userId) {
+        // userId에서 숫자만 추출 (예: user3 → 3)
+        String num = userId.replaceAll("\\D", "");
+        if (!num.isEmpty()) {
+            this.DB_NAME = "kakaotalkUser" + num + "TestData";
+        }
+    }
+
+    // DB 이름을 직접 지정
+    public void setDBName(String dbName) {
+        this.DB_NAME = dbName;
+    }
+
+    // UserData에 해당 id가 이미 존재하는지 확인
+    public boolean isUserExists(String id) {
+        String sql = "SELECT COUNT(*) FROM UserData WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 특정 DB에 id가 존재하는지 확인
+    public boolean idExistsInDB(String dbName, String id) {
+        String sql = "SELECT COUNT(*) FROM UserData WHERE id = ?";
+        try (Connection conn = getConnectionForDB(dbName);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // DB 이름을 지정해서 커넥션 생성
+    public Connection getConnectionForDB(String dbName) throws Exception {
+        String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + dbName +
+                "?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul";
+        return DriverManager.getConnection(url, DB_USER, DB_PASSWORD);
+    }
 
     private Connection getConnection() throws Exception {
         String url = "jdbc:mysql://" + DATA_BASE_IP + ":" + DATA_BASE_PORT + "/" + DB_NAME +
@@ -74,29 +124,37 @@ public class DBManager {
     }
     
     public void saveUser(User user) {
-        // FriendList 참조 데이터 삭제 (제약 위반 방지)
-//    	String deleteSql = "DELETE FROM UserData WHERE id = ?"; 
-        String deleteSql = "DELETE FROM UserData";  // 모든 행 삭제
-
-        String insertSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
+        // UserData에 저장
+        String deleteUserSql = "DELETE FROM UserData WHERE id = ?";
+        String insertUserSql = "INSERT INTO UserData(id, password, name, profileDir) VALUES (?, ?, ?, ?)";
+        // PhoneData에 저장
+        String deletePhoneSql = "DELETE FROM PhoneData";
+        String insertPhoneSql = "INSERT INTO PhoneData(phoneNum) VALUES (?)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
-            // FriendList 관련 참조 데이터 삭제 로직 (이전 답변 참고, 필요 시 추가)
-            
-            try (PreparedStatement deletePstmt = conn.prepareStatement(deleteSql)) {
-                // [추가합니다] 삭제할 사용자의 ID를 지정합니다.
-                deletePstmt.setString(1, user.getId()); 
+            // UserData 기존 id 삭제
+            try (PreparedStatement deletePstmt = conn.prepareStatement(deleteUserSql)) {
+                deletePstmt.setString(1, user.getId());
                 deletePstmt.executeUpdate();
             }
-
-            try (PreparedStatement insertPstmt = conn.prepareStatement(insertSql)) {
+            // UserData에 새로 저장
+            try (PreparedStatement insertPstmt = conn.prepareStatement(insertUserSql)) {
                 insertPstmt.setString(1, user.getId());
                 insertPstmt.setString(2, user.getPassword());
                 insertPstmt.setString(3, user.getName());
                 insertPstmt.setString(4, user.getProfileDir());
                 insertPstmt.executeUpdate();
+            }
+            // PhoneData 전체 삭제(1명만 저장한다면)
+            try (PreparedStatement deletePhonePstmt = conn.prepareStatement(deletePhoneSql)) {
+                deletePhonePstmt.executeUpdate();
+            }
+            // PhoneData에 새로 저장
+            try (PreparedStatement insertPhonePstmt = conn.prepareStatement(insertPhoneSql)) {
+                insertPhonePstmt.setString(1, user.getPhoneNum());
+                insertPhonePstmt.executeUpdate();
             }
 
             conn.commit();

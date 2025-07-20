@@ -108,6 +108,18 @@ public class ParsingController {
                 } else {
                     return "%Error%&message$User ID is missing for LoadChatRoomData%";
                 }
+            case "LoadChatData":
+                if (data.chatRoomNum != null && data.chatRoomNum.length > 0) {
+                    return mainController.loadChatData(data.chatRoomNum[0]);
+                } else {
+                    return "%Error%&message$Chat room number is missing for LoadChatData%";
+                }
+            case "Register":
+                if (data.id != null && data.password != null && data.name != null && data.profileDir != null && data.phoneNum != null) {
+                    return mainController.register(data.id[0], data.password[0], data.name[0], data.profileDir[0], data.phoneNum[0]);
+                } else {
+                    return "%Register%&success$false%";
+                }
             // 여기에 친구 목록, 채팅방 목록 등 다른 OPCODE에 대한 처리를 추가
             // case "LoadFriendData":
             //     return mainController.getFriendListAsString(data.phoneNum[0]);

@@ -4,8 +4,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import controller.MainController;
+import model.Chat;
 import model.ChatRoom;
 import model.DBManager;
+import model.LocalDBManager;
+import model.ChatFileManager;
 import observer.Observer;
 import observer.ServerCallEventHandle;
 
@@ -13,6 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatRoomPanel extends JPanel implements Observer{
@@ -23,6 +27,9 @@ public class ChatRoomPanel extends JPanel implements Observer{
 	public JButton addChatRoomBtn;
 	public JList<String[]> chatList;
 	public JTextField chatRoomSearchBar;
+	
+	// 채팅방 목록을 저장할 리스트
+	private List<ChatRoom> chatRooms = new ArrayList<>();
 
 	public ChatRoomPanel() {
 		System.out.println("[DEBUG] ChatRoomPanel 생성자 호출");
@@ -113,19 +120,38 @@ public class ChatRoomPanel extends JPanel implements Observer{
     public void onChatRoomListUpdated(List<ChatRoom> rooms) {
         System.out.println("[LOG] onChatRoomListUpdated 호출됨! 방 개수: " + rooms.size());
 
-        String[][] chatData = new String[rooms.size()][3];
-        for (int i = 0; i < rooms.size(); i++) {
-            ChatRoom room = rooms.get(i);
+        // 항상 로컬 DB에서 최신 목록을 읽어와 표시
+        LocalDBManager db = new LocalDBManager();
+        this.chatRooms = new ArrayList<>(db.loadChatRooms());
+        List<ChatRoom> displayRooms = this.chatRooms;
+
+        String[][] chatData = new String[displayRooms.size()][3];
+        for (int i = 0; i < displayRooms.size(); i++) {
+            ChatRoom room = displayRooms.get(i);
             chatData[i][0] = room.getRoomName();
-            // TODO: 서버에서 최근 메시지도 함께 받아와 room.getLastMessage() 등으로 설정해야 함
-            chatData[i][1] = "최근 메시지";
+            chatData[i][1] = room.getLastMessage() != null ? room.getLastMessage() : "메시지 없음";
             chatData[i][2] = "./profile/chatRoom/test.jpg";
         }
         chatList.setListData(chatData); // JList의 데이터를 새 데이터로 교체
-        
-        // UI를 새로 그리도록 명시적으로 요청
         this.revalidate();
         this.repaint();
+    }
+    
+    @Override
+    public void onChatDataUpdated(int chatRoomNum, List<Chat> chats) {
+        System.out.println("[LOG] onChatDataUpdated 호출됨! 채팅방 번호: " + chatRoomNum + ", 채팅 개수: " + chats.size());
+        // 채팅 데이터를 저장하고 필요시 UI 업데이트
+        // 현재는 로그만 출력
+    }
+    
+    // 채팅방 이름으로 채팅방 번호를 찾는 메서드
+    private int findChatRoomNumber(String roomName) {
+        for (ChatRoom room : chatRooms) {
+            if (room.getRoomName().equals(roomName)) {
+                return room.getChatRoomNum();
+            }
+        }
+        return -1; // 찾지 못한 경우
     }
 	
 	private void openChatRoomWindow(String[] data) {
@@ -155,9 +181,6 @@ public class ChatRoomPanel extends JPanel implements Observer{
 	    otherUserChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
 	    otherUserChatArea.setBackground(backgroundColor);
 	    otherUserChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
-	    // 예시 상대 내용 추가
-	    otherUserChatArea.append("안녕하세요!\n");
-	    otherUserChatArea.append("만나서 반갑습니다.\n");
 
 	    // 오른쪽(나) 채팅 영역
 	    JTextArea myChatArea = new JTextArea();
@@ -165,8 +188,22 @@ public class ChatRoomPanel extends JPanel implements Observer{
 	    myChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
 	    myChatArea.setBackground(backgroundColor);
 	    myChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
-	    // 예시 내 채팅 추가
-	    myChatArea.append("네, 안녕하세요!\n");
+	    
+	    // 채팅방 번호를 찾아서 서버에서 채팅 데이터 요청
+	    // data[0]은 채팅방 이름이므로, 채팅방 목록에서 해당 이름의 방 번호를 찾아야 함
+	    int chatRoomNum = findChatRoomNumber(data[0]);
+	    if (chatRoomNum != -1) {
+	        System.out.println("[LOG] 채팅방 번호 " + chatRoomNum + "의 채팅 데이터 요청");
+	        MainController.requestChatDataFromServer(chatRoomNum);
+	        
+	        // 채팅 데이터를 받아서 표시하는 옵저버 등록
+	        ChatWindowObserver chatObserver = new ChatWindowObserver(chatRoomNum, otherUserChatArea, myChatArea);
+	        ServerCallEventHandle.registerObserver(chatObserver);
+	        // .txt 파일에서 메시지 읽어와 바로 표시
+	        ChatFileManager fileManager = new ChatFileManager();
+	        String allChats = fileManager.loadChatsFromFile(chatRoomNum);
+	        otherUserChatArea.setText(allChats);
+	    }
 
 	    // JSplitPane 생성 및 설정
 	    JSplitPane splitPane = new JSplitPane(

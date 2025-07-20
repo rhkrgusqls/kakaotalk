@@ -2,6 +2,9 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import model.User;
+import model.DBManager;
+import model.TCPManager;
 /*
  * 로그인에 실패했거나 자동로그인에 실패했을 경우 해당 프레임을 띄워 회원가입하는 프레임. 
  */
@@ -67,10 +70,20 @@ public class RegisterFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "모든 값을 입력하세요.", "입력오류", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // TODO: 실제 회원가입 로직 연동
-            // 지금은 그냥 값을 다 채우면 "회원가입 완료" 출력 
-            JOptionPane.showMessageDialog(this, name +"님 회원가입 완료되었습니다!");
-            dispose();
+            // 서버에 회원가입 메시지 전송
+            String registerMsg = String.format(
+                "%%Register%%&id$%s&password$%s&name$%s&profileDir$%s&phoneNum$%s%%",
+                id, pw, name, "./profile/self/coldplay.jpg", phoneNum
+            );
+            String response = TCPManager.getInstance().sendSyncMessage(registerMsg);
+            if (response != null && response.contains("success$true")) {
+                JOptionPane.showMessageDialog(this, name +"님 회원가입 완료되었습니다!");
+                dispose();
+            } else if (response != null && response.contains("success$false")) {
+                JOptionPane.showMessageDialog(this, "이미 존재하는 아이디입니다.", "중복오류", JOptionPane.WARNING_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "회원가입 중 오류가 발생했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // --- 추가 및 보이기 ---
