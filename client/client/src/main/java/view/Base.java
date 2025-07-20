@@ -11,6 +11,7 @@ public class Base extends JFrame implements ActionListener{
 	private JPanel top;
 	private JButton exit;
 	private JButton hide;
+	private Point initalClick;
 	
 	// 베이스 패널
 	JPanel basePanel; 
@@ -42,7 +43,6 @@ public class Base extends JFrame implements ActionListener{
 	JButton chatBtn;
 	JButton alarm; // boolean 값으로 설정 @@@@@@@@@@@@@@@@@@@@@@@@
 	boolean alarmON = true;
-//	JButton alarmOFF;
 	JButton setting;
 	
 	FriendPanel friendPanel;
@@ -72,6 +72,23 @@ public class Base extends JFrame implements ActionListener{
 		top.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		top.setOpaque(false);
 		top.setPreferredSize(new Dimension(0, 23));
+		top.addMouseListener(new MouseAdapter() { // 화면 드래그 기능
+			public void mousePressed(MouseEvent e) {
+				initalClick = e.getPoint();
+			}
+		});
+		
+		top.addMouseMotionListener(new MouseMotionAdapter() {
+			public void mouseDragged(MouseEvent e) {
+				Point currentLocation = getLocation();
+				int deltaX = e.getX() - initalClick.x;
+				int deltaY = e.getY() - initalClick.y;
+				
+				setLocation(currentLocation.x + deltaX, currentLocation.y + deltaY);
+				
+			}
+		})
+		;
 		ImageIcon exListIcon = new ImageIcon("./image/exit.png");
 		Image scaledexListImg = exListIcon.getImage().getScaledInstance(12, 12, Image.SCALE_SMOOTH);
 		exit = new JButton(new ImageIcon(scaledexListImg));
@@ -157,6 +174,8 @@ public class Base extends JFrame implements ActionListener{
 				switchingPanel(1);
 			}
 		});
+		
+//		alarmOFF = new JButton("알람off");
 		alarm = new JButton("알람");
 		alarm.addActionListener(new ActionListener() {
 			@Override
@@ -172,8 +191,6 @@ public class Base extends JFrame implements ActionListener{
 			}
 			
 		});
-//		alarmOFF = new JButton("알람off");
-		alarm = new JButton("알람");
 		alarm.setMaximumSize(new Dimension(65, bottomButtonHeight));
 		alarm.setAlignmentX(Component.CENTER_ALIGNMENT);
 		
