@@ -114,7 +114,22 @@ public class mainController {
 	    return builder.toString();
 	}
 	
-	    public static String loadChatRoomData(String id) {
+	public static String uploadChat(int chatRoomNum, String text, String userId) {
+		 DBManagerModule db = new DBManagerModule();
+		    StringBuilder builder = new StringBuilder();
+		    builder.append("%Chat%");
+		 if(db.uploadChat(chatRoomNum, text, userId)){
+		    builder.append("&result$SUCCESS");
+		    builder.append("%");
+		 }
+		 else{
+			    builder.append("&result$FAIED");
+			    builder.append("%");
+		 }
+		 return builder.toString();
+	}
+	
+	public static String loadChatRoomData(String id) {
         DBManagerModule db = new DBManagerModule();
         // 내가 참여자인 채팅방만 조회 (ChatRoomMember를 통해 접근)
         List<ChatRoomData> rooms = db.loadChatRoomsForUser(id);

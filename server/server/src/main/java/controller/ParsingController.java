@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import model.DBManagerModule;
 
+import observer.ChatGroupManager;
+
 /**
  * ToDo:예외처리할것
  */
@@ -19,6 +21,7 @@ public class ParsingController {
         String[] profileDir;
         String[] phoneNum;
         String[] chatRoomNum;
+        String[] chatData; // ➕ 추가
     }
 
     public static String extractOpcode(String input) {
@@ -67,12 +70,13 @@ public class ParsingController {
         data.profileDir = toArray(tempMap.get("profileDir"));
         data.phoneNum = toArray(tempMap.get("phoneNum"));
         data.chatRoomNum = toArray(tempMap.get("chatRoomNum"));
+        data.chatData = toArray(tempMap.get("chatData")); // ➕ 추가
 
         return data;
     }
 
     private static String[] toArray(List<String> list) {
-        return (list == null || list.isEmpty()) ? new String[0] : list.toArray(new String[0]);
+        return list != null ? list.toArray(new String[0]) : null;
     }
     
     // 중복 정의된 controllerHandle 메서드를 하나로 합침
@@ -94,8 +98,6 @@ public class ParsingController {
                     return "%Error%&message$ID or Password missing%";
                 }
             case "Chat":
-                // Chat은 실시간 전송 후 DB 저장만 하므로, 여기서는 별도의 응답을 주지 않음
-                // [수정] 채팅 메시지 저장 및 참여자에게 중계
                 Map<String, String> chatMap = extractDataToMap(input);
                 String chatRoomNumStr = chatMap.get("chatRoomNum");
                 String userId = chatMap.get("userId");
@@ -103,7 +105,13 @@ public class ParsingController {
                 if (chatRoomNumStr != null && userId != null && text != null) {
                     mainController.broadcastChatMessage(Integer.parseInt(chatRoomNumStr), userId, text);
                 }
-                return ""; // 성공했다는 의미로 ACK(Acknowledge) 응답을 보내거나 빈 문자열 반환
+                int chatRoomNum = Integer.parseInt(data.chatRoomNum[0]);
+                String chatText = data.chatData[0];
+                String response = mainController.uploadChat(chatRoomNum, chatText, senderId);
+                String reloadMessage = "%ReloadChatRoom%&chatRoomNum$" + chatRoomNum + "%";
+                ChatGroupManager.getInstance().notifyGroup(String.valueOf(chatRoomNum), reloadMessage);
+                return response;
+
             case "ADDFRIEND":
                 // myId, targetId 파싱
                 Map<String, String> addFriendMap = extractDataToMap(input);
@@ -146,7 +154,7 @@ public class ParsingController {
                 }
                 if (data.id != null && data.id.length > 0) {
                     // 서버에서 채팅방 번호 생성
-                    int chatRoomNum = (int)(System.currentTimeMillis() / 1000) + (int)(Math.random() * 1000);
+                    int chatRoomNum2 = (int)(System.currentTimeMillis() / 1000) + (int)(Math.random() * 1000);
                     List<String> memberIds = new ArrayList<>();
                     DBManagerModule db = new DBManagerModule();
                     for (String id : data.id) {
@@ -160,7 +168,7 @@ public class ParsingController {
                         }
                         memberIds.add(memberId);
                     }
-                    return mainController.createChatRoomWithMembers(chatRoomNum, memberIds, customRoomName);
+                    return mainController.createChatRoomWithMembers(chatRoomNum2, memberIds, customRoomName);
                 } else {
                     return "%Error%&message$memberIds missing for CreateChatRoom%";
                 }
