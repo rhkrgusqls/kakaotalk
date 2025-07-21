@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import model.ChatRoom;
 import java.util.List;
+import controller.MainController;
 
 public class FriendPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -81,8 +82,23 @@ public class FriendPanel extends JPanel {
             String input = friendSearchBar.getText().trim();
             if(input.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "이름을 입력해주세요.");
+                return;
             }
-            //TODO 친구이름입력에 따른 검색버튼입니다, 이름검색에 따른 친구 리스트 표기 구현필요
+            // 친구 목록에서 검색어와 일치하는 친구만 필터링
+            filterFriendList(input);
+        });
+        
+        // 실시간 검색을 위한 키 이벤트 리스너 추가
+        friendSearchBar.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                String input = friendSearchBar.getText().trim();
+                if (input.isEmpty()) {
+                    refreshFriendList(); // 검색어가 없으면 전체 목록 표시
+                } else {
+                    filterFriendList(input);
+                }
+            }
         });
 
         ImageIcon addFriendIcon = new ImageIcon("./image/addFriend.png");
@@ -153,11 +169,54 @@ public class FriendPanel extends JPanel {
                     int index = friendList.locationToIndex(e.getPoint());
                     if (index >= 0) {
                         Friend friend = (Friend) friendList.getModel().getElementAt(index);
-                        openOneToOneChatRoom(friend);
+                        // 기존 openOneToOneChatRoom(friend) 대신 서버에 채팅방 생성 요청
+                        controller.MainController.createChatRoomWithFriend(friend.id, friend.name);
                     }
                 }
             }
         });
+    }
+
+    // 친구 목록 필터링 메서드
+    private void filterFriendList(String searchText) {
+        DBManager db = DBManager.getInstance();
+        java.util.List<String> allFriends = db.loadFriendList();
+        DefaultListModel<Friend> filteredModel = new DefaultListModel<>();
+        
+        for (String phone : allFriends) {
+            String name = phone;
+            String profileDir = null;
+            try (java.sql.Connection conn = db.getConnection();
+                 java.sql.PreparedStatement pstmt = conn.prepareStatement("SELECT name, profileDir FROM UserData WHERE phoneNum = ? LIMIT 1")) {
+                pstmt.setString(1, phone);
+                java.sql.ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    name = rs.getString("name");
+                    profileDir = rs.getString("profileDir");
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+            
+            if (name == null || name.isEmpty()) name = phone;
+            
+            // 검색어와 일치하는 친구만 추가 (대소문자 구분 없이)
+            if (name.toLowerCase().contains(searchText.toLowerCase())) {
+                byte[] profileBytes = null;
+                if (profileDir != null) {
+                    try {
+                        java.nio.file.Path path = java.nio.file.Paths.get(profileDir);
+                        if (java.nio.file.Files.exists(path)) {
+                            profileBytes = java.nio.file.Files.readAllBytes(path);
+                        }
+                    } catch (Exception ex) { /* ignore */ }
+                }
+                filteredModel.addElement(new Friend(0, phone, name, profileBytes));
+            }
+        }
+        
+        friendList.setModel(filteredModel);
+        friendList.setCellRenderer(new FriendCellRenderer());
+        friendList.revalidate();
+        friendList.repaint();
     }
 
     // 1:1 채팅방 진입 로직 (채팅방 존재 여부 확인 후 오픈)
@@ -184,8 +243,8 @@ public class FriendPanel extends JPanel {
             found.setChatRoomNum(maxNum + 1);
             db.saveChatRoom(found);
         }
-        // 메인 프레임의 ChatRoomPanel에서 채팅창 열기
-        view.Base.getInstance().getChatRoomPanel().openChatRoomWindow(new String[]{found.getRoomName(), "최근 메시지", "./profile/chatRoom/test.jpg"});
+        // 메인 프레임의 ChatRoomPanel에서 채팅창 열기 (chatRoomNum 직접 전달)
+        view.Base.getInstance().getChatRoomPanel().openChatRoomWindow(found.getChatRoomNum(), found.getRoomName(), found.getLastMessage() != null ? found.getLastMessage() : "최근 메시지", "./profile/chatRoom/test.jpg");
     }
 
     // 이름+아이콘으로 친구를 표시하는 셀 렌더러

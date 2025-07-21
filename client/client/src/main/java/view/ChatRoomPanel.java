@@ -9,6 +9,7 @@ import model.ChatRoom;
 import model.DBManager;
 import model.LocalDBManager;
 import model.ChatFileManager;
+import model.User;
 import observer.Observer;
 import observer.ServerCallEventHandle;
 
@@ -58,17 +59,33 @@ public class ChatRoomPanel extends JPanel implements Observer{
 			String input = chatRoomSearchBar.getText().trim();
 			if(input.isEmpty()) {
 				JOptionPane.showMessageDialog(null, "채팅방 이름을 입력해주세요.");
+				return;
 			}
-			//TODO 채팅방이름 입력에 따른 검색버튼입니다, 채티방이름 검색에 따른 채팅방 표기 구현필요
+			// 채팅방 목록에서 검색어와 일치하는 채팅방만 필터링
+			filterChatRoomList(input);
+		});
+		
+		// 실시간 검색을 위한 키 이벤트 리스너 추가
+		chatRoomSearchBar.addKeyListener(new java.awt.event.KeyAdapter() {
+			@Override
+			public void keyReleased(java.awt.event.KeyEvent e) {
+				String input = chatRoomSearchBar.getText().trim();
+				if (input.isEmpty()) {
+					// 검색어가 없으면 전체 목록 표시
+					onChatRoomListUpdated(chatRooms);
+				} else {
+					filterChatRoomList(input);
+				}
+			}
 		});
 		searchPanel.setBackground(new Color(0xFFFFFF));
-		searchOpenChatBtn = new JButton("오픈채팅");
-		searchOpenChatBtn.addActionListener(e -> {
-		    OpenChatRoomSearchFrame openFrame = new OpenChatRoomSearchFrame();
-		    openFrame.setVisible(true);
-		});
+		//searchOpenChatBtn = new JButton("오픈채팅");
+        //searchOpenChatBtn.addActionListener(e -> {
+        //    OpenChatRoomSearchFrame openFrame = new OpenChatRoomSearchFrame();
+        //    openFrame.setVisible(true);
+        //});
 		searchPanel.add(searchBtn);
-		searchPanel.add(searchOpenChatBtn);
+        //searchPanel.add(searchOpenChatBtn); // 오픈채팅 버튼 제거
 		addChatRoomBtn = new JButton("방 생성"); // 방생성 버튼
 		addChatRoomBtn.addActionListener(e -> {
 			AddChatRoomFrame addChatRoom = new AddChatRoomFrame();
@@ -101,6 +118,16 @@ public class ChatRoomPanel extends JPanel implements Observer{
                     }
                 }
             }
+            
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) { // 우클릭
+                    int index = chatList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        showChatRoomContextMenu(e.getPoint(), index);
+                    }
+                }
+            }
         });
         JPanel chatRoomPanel = new JPanel(new BorderLayout());
         chatRoomPanel.setBackground(new Color(0xFFFFFF));
@@ -120,9 +147,7 @@ public class ChatRoomPanel extends JPanel implements Observer{
     public void onChatRoomListUpdated(List<ChatRoom> rooms) {
         System.out.println("[LOG] onChatRoomListUpdated 호출됨! 방 개수: " + rooms.size());
 
-        // 항상 로컬 DB에서 최신 목록을 읽어와 표시
-        LocalDBManager db = new LocalDBManager();
-        this.chatRooms = new ArrayList<>(db.loadChatRooms());
+        this.chatRooms = new ArrayList<>(rooms); // 서버에서 받은 목록을 직접 사용
         List<ChatRoom> displayRooms = this.chatRooms;
 
         String[][] chatData = new String[displayRooms.size()][3];
@@ -144,6 +169,72 @@ public class ChatRoomPanel extends JPanel implements Observer{
         // 현재는 로그만 출력
     }
     
+    // 채팅방 목록 필터링 메서드
+    private void filterChatRoomList(String searchText) {
+        List<ChatRoom> filteredRooms = new ArrayList<>();
+        
+        for (ChatRoom room : chatRooms) {
+            // 채팅방 이름에서 검색어와 일치하는 채팅방만 추가 (대소문자 구분 없이)
+            if (room.getRoomName().toLowerCase().contains(searchText.toLowerCase())) {
+                filteredRooms.add(room);
+            }
+        }
+        
+        String[][] chatData = new String[filteredRooms.size()][3];
+        for (int i = 0; i < filteredRooms.size(); i++) {
+            ChatRoom room = filteredRooms.get(i);
+            chatData[i][0] = room.getRoomName();
+            chatData[i][1] = room.getLastMessage() != null ? room.getLastMessage() : "메시지 없음";
+            chatData[i][2] = "./profile/chatRoom/test.jpg";
+        }
+        chatList.setListData(chatData);
+        this.revalidate();
+        this.repaint();
+    }
+    
+    // 채팅방 우클릭 컨텍스트 메뉴 표시
+    private void showChatRoomContextMenu(Point point, int index) {
+        JPopupMenu contextMenu = new JPopupMenu();
+        
+        String[] data = chatList.getModel().getElementAt(index);
+        String roomName = data[0];
+        int chatRoomNum = findChatRoomNumber(roomName);
+        
+        JMenuItem deleteItem = new JMenuItem("채팅방 나가기");
+        deleteItem.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(this, 
+                "정말로 이 채팅방을 나가시겠습니까?", 
+                "채팅방 나가기", 
+                JOptionPane.YES_NO_OPTION);
+            
+            if (result == JOptionPane.YES_OPTION) {
+                deleteChatRoom(chatRoomNum);
+            }
+        });
+        
+        contextMenu.add(deleteItem);
+        contextMenu.show(chatList, point.x, point.y);
+    }
+    
+    // 채팅방 삭제 요청
+    private void deleteChatRoom(int chatRoomNum) {
+        String myId = controller.MainController.getLoggedInUser().getId();
+        String deleteMsg = String.format("%%DeleteChatRoom%%&chatRoomNum$%d&userId$%s%%", chatRoomNum, myId);
+        String response = model.TCPManager.getInstance().sendSyncMessage(deleteMsg);
+        
+        if (response != null && response.contains("success$true")) {
+            JOptionPane.showMessageDialog(this, "채팅방을 나갔습니다.");
+            // 채팅방 목록 새로고침
+            controller.MainController.requestChatRoomsFromServer(myId);
+        } else {
+            String errorMsg = "채팅방 나가기에 실패했습니다.";
+            if (response != null && response.contains("error$")) {
+                errorMsg = response.split("error\\$")[1].split("&")[0];
+            }
+            JOptionPane.showMessageDialog(this, errorMsg, "오류", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     // 채팅방 이름으로 채팅방 번호를 찾는 메서드
     private int findChatRoomNumber(String roomName) {
         for (ChatRoom room : chatRooms) {
@@ -154,97 +245,98 @@ public class ChatRoomPanel extends JPanel implements Observer{
         return -1; // 찾지 못한 경우
     }
 	
-	// 채팅방 창을 열어서 채팅을 표시하는 메서드
-	public void openChatRoomWindow(String[] data) {
-	    JFrame chatWindow = new JFrame(data[0]); 
-	    chatWindow.setSize(450, 600);
-	    chatWindow.setLocationRelativeTo(null);
-	    chatWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 독립된 창 닫기
-	    
-	    Color backgroundColor = Color.WHITE;
+	// 채팅방 창을 열어서 채팅을 표시하는 메서드 (chatRoomNum 직접 전달)
+    public void openChatRoomWindow(int chatRoomNum, String roomName, String lastMessage, String profilePath) {
+        JFrame chatWindow = new JFrame(roomName); 
+        chatWindow.setSize(450, 600);
+        chatWindow.setLocationRelativeTo(null);
+        chatWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // 독립된 창 닫기
+        
+        Color backgroundColor = Color.WHITE;
 
-	    // 메인 컨테이너 패널
-	    JPanel mainContainerPanel = new JPanel(new BorderLayout());
-	    mainContainerPanel.setBackground(backgroundColor);
+        // 메인 컨테이너 패널
+        JPanel mainContainerPanel = new JPanel(new BorderLayout());
+        mainContainerPanel.setBackground(backgroundColor);
 
-	    // 채팅방 제목 레이블
-	    JLabel title = new JLabel(data[0], SwingConstants.CENTER);
-	    title.setFont(new Font("맑은 고딕", Font.BOLD, 18));
-	    title.setOpaque(true); 
-	    title.setBackground(backgroundColor);
-	    title.setBorder(new EmptyBorder(10, 0, 10, 0));
+        // 채팅방 제목 레이블
+        JLabel title = new JLabel(roomName, SwingConstants.CENTER);
+        title.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+        title.setOpaque(true); 
+        title.setBackground(backgroundColor);
+        title.setBorder(new EmptyBorder(10, 0, 10, 0));
 
-	    // JSplitPane으로 채팅을 나눔
+        // 통합 채팅 영역 (카카오톡 스타일)
+        JTextArea chatArea = new JTextArea();
+        chatArea.setEditable(false);
+        chatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        chatArea.setBackground(backgroundColor);
+        chatArea.setBorder(new EmptyBorder(5, 5, 5, 5));
+        chatArea.setLineWrap(true);
+        chatArea.setWrapStyleWord(true);
+        
+        // 서버에서 채팅 데이터 요청
+        if (chatRoomNum != -1) {
+            System.out.println("[LOG] 채팅방 번호 " + chatRoomNum + "의 채팅 데이터 요청");
+            MainController.requestChatDataFromServer(chatRoomNum);
+            ChatWindowObserver chatObserver = new ChatWindowObserver(chatRoomNum, chatArea, chatArea);
+            ServerCallEventHandle.registerObserver(chatObserver);
+            // 채팅창 닫힐 때 옵저버 해제
+            chatWindow.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent e) {
+                    chatObserver.unregister();
+                    System.out.println("[DEBUG] ChatWindowObserver 해제 완료");
+                }
+            });
+        }
 
-	    // 왼쪽(상대방) 채팅 영역
-	    JTextArea otherUserChatArea = new JTextArea();
-	    otherUserChatArea.setEditable(false);
-	    otherUserChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-	    otherUserChatArea.setBackground(backgroundColor);
-	    otherUserChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
+        JScrollPane chatScrollPane = new JScrollPane(chatArea);
+        chatScrollPane.setBorder(null);
+        chatScrollPane.getViewport().setBackground(backgroundColor);
+        JPanel sendPanel = new JPanel(new BorderLayout(5, 0));
+        sendPanel.setBackground(backgroundColor);
+        sendPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JTextField messageInput = new JTextField();
+        JButton send = new JButton("전송");
+        sendPanel.add(messageInput, BorderLayout.CENTER);
+        sendPanel.add(send, BorderLayout.EAST);
+        send.addActionListener(e -> {
+            String text = messageInput.getText().trim();
+            if (text.isEmpty()) return;
+            String myId = MainController.getLoggedInUser().getId();
+            String msg = String.format("%%Chat%%&chatRoomNum$%d&userId$%s&text$%s%%", chatRoomNum, myId, text);
+            model.TCPManager.getInstance().sendSyncMessage(msg);
+            // 내 메시지를 바로 append (optimistic UI)
+            chatArea.append(myId + ": " + text + "\n");
+            messageInput.setText("");
+        });
+        mainContainerPanel.add(title, BorderLayout.NORTH);
+        mainContainerPanel.add(chatScrollPane, BorderLayout.CENTER);
+        mainContainerPanel.add(sendPanel, BorderLayout.SOUTH);
+        chatWindow.add(mainContainerPanel);
+        chatWindow.setVisible(true);
+    }
 
-	    // 오른쪽(나) 채팅 영역
-	    JTextArea myChatArea = new JTextArea();
-	    myChatArea.setEditable(false);
-	    myChatArea.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
-	    myChatArea.setBackground(backgroundColor);
-	    myChatArea.setBorder(new EmptyBorder(5, 5, 5, 5)); // 텍스트 영역 내부 여백
-	    
-	    // 채팅방 번호를 찾아서 서버에서 채팅 데이터 요청
-	    // data[0]은 채팅방 이름이므로, 채팅방 목록에서 해당 이름의 방 번호를 찾아야 함
-	    int chatRoomNum = findChatRoomNumber(data[0]);
-	    if (chatRoomNum != -1) {
-	        System.out.println("[LOG] 채팅방 번호 " + chatRoomNum + "의 채팅 데이터 요청");
-	        MainController.requestChatDataFromServer(chatRoomNum);
-	        
-	        // 채팅 데이터를 받아서 표시하는 옵저버 등록
-	        ChatWindowObserver chatObserver = new ChatWindowObserver(chatRoomNum, otherUserChatArea, myChatArea);
-	        ServerCallEventHandle.registerObserver(chatObserver);
-	        // .txt 파일에서 메시지 읽어와 바로 표시
-	        ChatFileManager fileManager = new ChatFileManager();
-	        String allChats = fileManager.loadChatsFromFile(chatRoomNum);
-	        otherUserChatArea.setText(allChats);
-	    }
-
-	    // JSplitPane 생성 및 설정
-	    JSplitPane splitPane = new JSplitPane(
-	        JSplitPane.HORIZONTAL_SPLIT, // 좌우로 분할
-	        new JScrollPane(otherUserChatArea),
-	        new JScrollPane(myChatArea)
-	    );
-	    splitPane.setResizeWeight(0.5); // 양쪽 패널이 5:5 비율
-	    splitPane.setDividerSize(0);    // 구분선 두께
-	    splitPane.setBorder(null); 
-
-	    // JScrollPane의 배경색도 흰색으로 설정
-	    for (Component c : splitPane.getComponents()) {
-	        if (c instanceof JScrollPane) {
-	            ((JScrollPane) c).getViewport().setBackground(backgroundColor);
-	            ((JScrollPane) c).setBorder(null);
-	        }
-	    }
-
-	    // 하단 메시지 입력 및 전송 패널
-	    JPanel sendPanel = new JPanel(new BorderLayout(5, 0));
-	    sendPanel.setBackground(backgroundColor);
-	    sendPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-	    JTextField messageInput = new JTextField();
-	    JButton send = new JButton("전송");
-	    sendPanel.add(messageInput, BorderLayout.CENTER);
-	    sendPanel.add(send, BorderLayout.EAST);
-
-	    // 메인 컨테이너에 컴포넌트들 최종 조립
-	    mainContainerPanel.add(title, BorderLayout.NORTH);
-	    mainContainerPanel.add(splitPane, BorderLayout.CENTER); // GridLayout 패널 대신 JSplitPane을 추가
-	    mainContainerPanel.add(sendPanel, BorderLayout.SOUTH);
-
-	    chatWindow.add(mainContainerPanel);
-	    chatWindow.setVisible(true);
-
-	    // splitPane이 화면에 표시된 후 divider 위치를 정확히 중앙으로 설정
-	    SwingUtilities.invokeLater(() -> {
-	        splitPane.setDividerLocation(0.5);
-	    });
-	}
+    // 기존 openChatRoomWindow(String[] data)에서 chatRoomNum을 찾아서 위 메서드로 위임
+    public void openChatRoomWindow(String[] data) {
+        int chatRoomNum = findChatRoomNumber(data[0]);
+        openChatRoomWindow(chatRoomNum, data[0], data[1], data[2]);
+    }
+    
+    // 채팅방 목록 새로고침
+    public void refreshChatRoomList() {
+        User currentUser = MainController.getLoggedInUser();
+        if (currentUser != null) {
+            LocalDBManager localDB = new LocalDBManager();
+            List<ChatRoom> userRooms = localDB.loadChatRoomsForUser(currentUser.getId());
+            onChatRoomListUpdated(userRooms);
+        }
+    }
+    
+    // 채팅창 업데이트 (새 메시지 수신 시)
+    public void updateChatWindow(int chatRoomNum, String userId, String text) {
+        // 열려있는 채팅창이 있다면 업데이트
+        // ChatWindowObserver에서 처리하므로 여기서는 로그만 출력
+        System.out.println("[DEBUG] 채팅창 업데이트 요청: " + chatRoomNum + " | " + userId + " | " + text);
+    }
 	}

@@ -7,6 +7,8 @@ import model.UserData;
 import model.ChatRoomData;
 import model.ChatData;
 
+import console.UserManager;
+
 /**
  * ToDo:인코딩문자열통일할것
  */
@@ -112,23 +114,25 @@ public class mainController {
 	    return builder.toString();
 	}
 	
-	public static String loadChatRoomData(String id) {
+	    public static String loadChatRoomData(String id) {
         DBManagerModule db = new DBManagerModule();
-        // == 매개변수 id를 사용하여 해당 사용자의 채팅방만 가져옵니다.
-        List<ChatRoomData> rooms = db.loadChatRoom(id); 
+        // 내가 참여자인 채팅방만 조회 (ChatRoomMember를 통해 접근)
+        List<ChatRoomData> rooms = db.loadChatRoomsForUser(id);
         
         StringBuilder builder = new StringBuilder();
         builder.append("%LoadChatRoomData%");
         
         if (rooms != null) { // DB 조회 결과가 null이 아닌지 확인
             for (ChatRoomData room : rooms) {
-                // 각 채팅방의 최근 메시지도 함께 가져오기
+                // 각 채팅방의 최근 메시지와 시간도 함께 가져오기
                 String lastMessage = db.getLastMessageForRoom(room.chatRoomNum);
+                String lastMessageTime = db.getLastMessageTimeForRoom(room.chatRoomNum);
                 
                 builder.append("&chatRoomNum$").append(room.chatRoomNum)
                        .append("&roomType$").append(room.roomType)
                        .append("&roomName$").append(room.roomName)
-                       .append("&lastMessage$").append(lastMessage != null ? lastMessage : "메시지 없음");
+                       .append("&lastMessage$").append(lastMessage != null ? lastMessage : "메시지 없음")
+                       .append("&lastMessageTime$").append(lastMessageTime != null ? lastMessageTime : "");
             }
         }
         
@@ -184,13 +188,201 @@ public class mainController {
                 friendProfileDir = rs.getString("profileDir");
             }
         } catch (Exception e) { e.printStackTrace(); }
-        // 친구 관계 저장
+        // 친구 관계 저장 (양방향)
         boolean ok = db.setFriendData(myPhone, targetPhone);
         if (ok) {
+            // 상대방에게도 친구 추가 알림 전송
+            UserManager.getInstance().sendMessageToUser(friendId, 
+                "%FriendAdded%&friendId$" + myId + "&friendName$" + db.getUserNameById(myId) + "%");
+            // [추가] 양쪽 모두에게 친구 목록 갱신 알림 전송
+            UserManager.getInstance().sendMessageToUser(myId, "%FriendListUpdated%&userId$" + myId + "%");
+            UserManager.getInstance().sendMessageToUser(friendId, "%FriendListUpdated%&userId$" + friendId + "%");
             return String.format("%%ADDFRIEND%%&phoneNum$%s&friendId$%s&friendName$%s&friendProfileDir$%s%%", targetPhone, friendId, friendName, friendProfileDir);
         } else {
+            // 이미 친구여도 양쪽 모두에게 갱신 메시지 전송
+            UserManager.getInstance().sendMessageToUser(myId, "%FriendListUpdated%&userId$" + myId + "%");
+            UserManager.getInstance().sendMessageToUser(friendId, "%FriendListUpdated%&userId$" + friendId + "%");
             return "%ADDFRIEND%&error$이미 친구이거나 DB 오류입니다.%";
         }
     }
 
+    // [수정] 방 생성 시 ChatRoomList와 ChatRoomMember 모두에 저장
+    public static String createChatRoomWithMembers(int chatRoomNum, List<String> memberIds) {
+        return createChatRoomWithMembers(chatRoomNum, memberIds, null);
+    }
+
+    // [추가] 채팅 메시지 저장 후 해당 방 참여자에게 메시지 중계
+    public static void broadcastChatMessage(int chatRoomNum, String userId, String text) {
+        // 1. DB에 저장
+        DBManagerModule db = new DBManagerModule();
+        db.insertChatData(chatRoomNum, userId, text);
+        // 2. 참여자 목록 조회
+        List<String> memberIds = db.getChatRoomMemberIds(chatRoomNum);
+        // 3. 각 참여자에게 메시지 전송
+        String msg = String.format("%%ChatBroadcast%%&chatRoomNum$%d&userId$%s&text$%s%%", chatRoomNum, userId, text);
+        for (String memberId : memberIds) {
+            UserManager.getInstance().sendMessageToUser(memberId, msg);
+            System.out.println("[브로드캐스트] to " + memberId + ": " + msg);
+        }
+    }
+
+    // [추가] 비밀번호 재설정
+    public static String resetPassword(String id, String currentPassword, String newPassword) {
+        DBManagerModule db = new DBManagerModule();
+        
+        try (java.sql.Connection conn = db.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT password FROM UserData WHERE id = ?")) {
+            pstmt.setString(1, id);
+            java.sql.ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                String storedPassword = rs.getString("password");
+                if (storedPassword.equals(currentPassword)) {
+                    // 현재 비밀번호가 맞으면 새 비밀번호로 업데이트
+                    try (java.sql.PreparedStatement updateStmt = conn.prepareStatement(
+                        "UPDATE UserData SET password = ? WHERE id = ?")) {
+                        updateStmt.setString(1, newPassword);
+                        updateStmt.setString(2, id);
+                        updateStmt.executeUpdate();
+                        return "%ResetPassword%&success$true%";
+                    }
+                } else {
+                    return "%ResetPassword%&success$false&error$현재 비밀번호가 올바르지 않습니다.%";
+                }
+            } else {
+                return "%ResetPassword%&success$false&error$존재하지 않는 사용자입니다.%";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "%ResetPassword%&success$false&error$비밀번호 변경 중 오류가 발생했습니다.%";
+        }
+    }
+
+    // [추가] 채팅방 삭제
+    public static String deleteChatRoom(int chatRoomNum, String userId) {
+        DBManagerModule db = new DBManagerModule();
+        
+        try (java.sql.Connection conn = db.getConnection()) {
+            // 1. 해당 사용자가 채팅방의 참여자인지 확인
+            try (java.sql.PreparedStatement checkStmt = conn.prepareStatement(
+                "SELECT COUNT(*) FROM ChatRoomMember WHERE chatRoomNum = ? AND id = ?")) {
+                checkStmt.setInt(1, chatRoomNum);
+                checkStmt.setString(2, userId);
+                java.sql.ResultSet rs = checkStmt.executeQuery();
+                
+                if (rs.next() && rs.getInt(1) > 0) {
+                    // 2. ChatRoomMember에서 해당 사용자 제거
+                    try (java.sql.PreparedStatement deleteMemberStmt = conn.prepareStatement(
+                        "DELETE FROM ChatRoomMember WHERE chatRoomNum = ? AND id = ?")) {
+                        deleteMemberStmt.setInt(1, chatRoomNum);
+                        deleteMemberStmt.setString(2, userId);
+                        deleteMemberStmt.executeUpdate();
+                    }
+                    
+                    // 3. 해당 채팅방의 남은 참여자 수 확인
+                    try (java.sql.PreparedStatement countStmt = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM ChatRoomMember WHERE chatRoomNum = ?")) {
+                        countStmt.setInt(1, chatRoomNum);
+                        java.sql.ResultSet countRs = countStmt.executeQuery();
+                        
+                        if (countRs.next() && countRs.getInt(1) == 0) {
+                            // 참여자가 없으면 채팅방과 관련 데이터 모두 삭제
+                            try (java.sql.PreparedStatement deleteChatStmt = conn.prepareStatement(
+                                "DELETE FROM ChatList WHERE chatRoomNum = ?")) {
+                                deleteChatStmt.setInt(1, chatRoomNum);
+                                deleteChatStmt.executeUpdate();
+                            }
+                            
+                            try (java.sql.PreparedStatement deleteRoomStmt = conn.prepareStatement(
+                                "DELETE FROM ChatRoomList WHERE chatRoomNum = ?")) {
+                                deleteRoomStmt.setInt(1, chatRoomNum);
+                                deleteRoomStmt.executeUpdate();
+                            }
+                        }
+                    }
+                    
+                    // 4. 남은 참여자들에게 채팅방 목록 업데이트 알림
+                    List<String> remainingMembers = db.getChatRoomMemberIds(chatRoomNum);
+                    for (String memberId : remainingMembers) {
+                        UserManager.getInstance().sendMessageToUser(memberId, 
+                            "%ChatRoomListUpdated%&userId$" + memberId + "%");
+                    }
+                    
+                    return "%DeleteChatRoom%&success$true%";
+                } else {
+                    return "%DeleteChatRoom%&success$false&error$해당 채팅방에 참여하고 있지 않습니다.%";
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "%DeleteChatRoom%&success$false&error$채팅방 삭제 중 오류가 발생했습니다.%";
+        }
+    }
+
+    public static String createChatRoomWithMembers(int chatRoomNum, List<String> memberIds, String customRoomName) {
+        DBManagerModule db = new DBManagerModule();
+        // 1. 채팅방 번호가 이미 존재하는지 확인
+        try (java.sql.Connection conn = db.getConnection();
+             java.sql.PreparedStatement checkStmt = conn.prepareStatement(
+                 "SELECT COUNT(*) FROM ChatRoomList WHERE chatRoomNum = ?")) {
+            checkStmt.setInt(1, chatRoomNum);
+            java.sql.ResultSet rs = checkStmt.executeQuery();
+            if (rs.next() && rs.getInt(1) > 0) {
+                // 이미 존재하는 경우 새로운 번호 생성
+                chatRoomNum = (int)(System.currentTimeMillis() / 1000) + (int)(Math.random() * 1000);
+                System.out.println("[DEBUG] 채팅방 번호 중복, 새로운 번호 생성: " + chatRoomNum);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "%CreateChatRoom%&success$false%";
+        }
+        String roomType = "1:1";
+        String roomName;
+        if (customRoomName != null && !customRoomName.isEmpty()) {
+            roomName = customRoomName;
+        } else if (memberIds.size() == 2) {
+            String creatorName = db.getUserNameById(memberIds.get(0));
+            roomName = creatorName != null ? creatorName + "와의 1:1 채팅" : "1:1 채팅방";
+        } else {
+            roomName = "그룹 채팅방 " + chatRoomNum;
+        }
+        try (java.sql.Connection conn = db.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(
+                 "INSERT INTO ChatRoomList(chatRoomNum, roomType, roomName) VALUES (?, ?, ?)")) {
+            pstmt.setInt(1, chatRoomNum);
+            pstmt.setString(2, roomType);
+            pstmt.setString(3, roomName);
+            pstmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "%CreateChatRoom%&success$false%";
+        }
+        int successCount = 0;
+        for (String userId : memberIds) {
+            if (db.insertChatRoomMember(chatRoomNum, userId)) {
+                successCount++;
+            }
+        }
+        for (String userId : memberIds) {
+            String notificationMsg = "%ChatRoomListUpdated%&userId$" + userId + "%";
+            UserManager.getInstance().sendMessageToUser(userId, notificationMsg);
+            System.out.println("[DEBUG] 채팅방 생성 알림 전송: " + userId + " -> " + notificationMsg);
+        }
+        if (successCount == memberIds.size()) {
+            String broadcastMsg = String.format("%%ChatRoomCreated%%&chatRoomNum$%d&roomType$%s&roomName$%s%%", 
+                chatRoomNum, roomType, roomName);
+            for (String memberId : memberIds) {
+                try {
+                    UserManager.getInstance().sendMessageToUser(memberId, broadcastMsg);
+                    System.out.println("[DEBUG] 채팅방 생성 알림 전송 to " + memberId + ": " + broadcastMsg);
+                } catch (Exception e) {
+                    System.out.println("[ERROR] 채팅방 생성 알림 전송 실패 to " + memberId + ": " + e.getMessage());
+                }
+            }
+            return "%CreateChatRoom%&success$true&chatRoomNum$" + chatRoomNum + "%";
+        } else {
+            return "%CreateChatRoom%&success$partial%";
+        }
+    }
 }

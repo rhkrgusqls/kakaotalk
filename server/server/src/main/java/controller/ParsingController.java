@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import model.DBManagerModule;
 
 /**
  * ToDo:예외처리할것
@@ -94,6 +95,14 @@ public class ParsingController {
                 }
             case "Chat":
                 // Chat은 실시간 전송 후 DB 저장만 하므로, 여기서는 별도의 응답을 주지 않음
+                // [수정] 채팅 메시지 저장 및 참여자에게 중계
+                Map<String, String> chatMap = extractDataToMap(input);
+                String chatRoomNumStr = chatMap.get("chatRoomNum");
+                String userId = chatMap.get("userId");
+                String text = chatMap.get("text");
+                if (chatRoomNumStr != null && userId != null && text != null) {
+                    mainController.broadcastChatMessage(Integer.parseInt(chatRoomNumStr), userId, text);
+                }
                 return ""; // 성공했다는 의미로 ACK(Acknowledge) 응답을 보내거나 빈 문자열 반환
             case "ADDFRIEND":
                 // myId, targetId 파싱
@@ -111,6 +120,12 @@ public class ParsingController {
                 } else {
                     return "%Error%&message$User ID is missing for LoadChatRoomData%";
                 }
+            case "chatListLoad":
+                if (data.id != null && data.id.length > 0) {
+                    return mainController.loadChatRoomData(data.id[0]);
+                } else {
+                    return "%Error%&message$User ID is missing for chatListLoad%";
+                }
             case "LoadChatData":
                 if (data.chatRoomNum != null && data.chatRoomNum.length > 0) {
                     return mainController.loadChatData(data.chatRoomNum[0]);
@@ -122,6 +137,53 @@ public class ParsingController {
                     return mainController.register(data.id[0], data.password[0], data.name[0], data.profileDir[0], data.phoneNum[0]);
                 } else {
                     return "%Register%&success$false%";
+                }
+            case "CreateChatRoom":
+                // id(여러 명) 파싱 (chatRoomNum은 서버에서 생성)
+                String customRoomName = null;
+                if (data.name != null && data.name.length > 0) {
+                    customRoomName = data.name[0];
+                }
+                if (data.id != null && data.id.length > 0) {
+                    // 서버에서 채팅방 번호 생성
+                    int chatRoomNum = (int)(System.currentTimeMillis() / 1000) + (int)(Math.random() * 1000);
+                    List<String> memberIds = new ArrayList<>();
+                    DBManagerModule db = new DBManagerModule();
+                    for (String id : data.id) {
+                        // 전화번호인 경우 ID로 변환
+                        String memberId = id;
+                        if (id.matches("^01[0-9]{8,9}$")) {
+                            String convertedId = db.getIdByPhoneNum(id);
+                            if (convertedId != null) {
+                                memberId = convertedId;
+                            }
+                        }
+                        memberIds.add(memberId);
+                    }
+                    return mainController.createChatRoomWithMembers(chatRoomNum, memberIds, customRoomName);
+                } else {
+                    return "%Error%&message$memberIds missing for CreateChatRoom%";
+                }
+            case "ResetPassword":
+                // 비밀번호 재설정 처리
+                Map<String, String> resetMap = extractDataToMap(input);
+                String resetId = resetMap.get("id");
+                String currentPassword = resetMap.get("currentPassword");
+                String newPassword = resetMap.get("newPassword");
+                if (resetId != null && currentPassword != null && newPassword != null) {
+                    return mainController.resetPassword(resetId, currentPassword, newPassword);
+                } else {
+                    return "%ResetPassword%&success$false&error$필수 정보가 누락되었습니다.%";
+                }
+            case "DeleteChatRoom":
+                // 채팅방 삭제 처리
+                Map<String, String> deleteMap = extractDataToMap(input);
+                String deleteChatRoomNum = deleteMap.get("chatRoomNum");
+                String deleteUserId = deleteMap.get("userId");
+                if (deleteChatRoomNum != null && deleteUserId != null) {
+                    return mainController.deleteChatRoom(Integer.parseInt(deleteChatRoomNum), deleteUserId);
+                } else {
+                    return "%DeleteChatRoom%&success$false&error$채팅방 번호 또는 사용자 ID가 누락되었습니다.%";
                 }
             // 여기에 친구 목록, 채팅방 목록 등 다른 OPCODE에 대한 처리를 추가
             // case "LoadFriendData":

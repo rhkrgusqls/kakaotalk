@@ -23,9 +23,8 @@ public class LoginFrame extends JFrame{
 	private ImageIcon imageIcon; // 이미지  
 	private JLabel imageLabel; // 이미지 라벨
 	private JTextField inputId;
-	private JTextField inputPw;
+	private JPasswordField inputPw;
 	private JButton loginVerify;
-	private JCheckBox autoLogin;
 	
 	private JPanel bottom; // 하단
 	private JButton resetPw;
@@ -97,7 +96,7 @@ public class LoginFrame extends JFrame{
 		middle = new JPanel();
 		middle.setBackground(new Color(0xFEE500));
 		middle.setLayout(new BoxLayout(middle, BoxLayout.Y_AXIS));
-		// 카카오톡 로고 
+		// 카카오톡 로고 	
 		imageIcon = new ImageIcon("image/KakaoTalk_logo151.png");
 		imageLabel = new JLabel(imageIcon);
 		imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -109,7 +108,7 @@ public class LoginFrame extends JFrame{
 		inputId = new JTextField("아이디");
 		inputId.setMaximumSize(new Dimension(240, 35));
 //		inputId.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
-		inputPw = new JTextField("비밀번호");
+		inputPw = new JPasswordField("비밀번호");
 		inputPw.setMaximumSize(new Dimension(240, 35));
 		loginVerify = new JButton("로그인");
 		//Color brownColor = new Color(108, 60, 12);new Color(0xFEE500)
@@ -127,7 +126,7 @@ public class LoginFrame extends JFrame{
 				//		값이 맞든 안맞든 공백이든 BaseFrame으로 넘어감
 				
 				String id = inputId.getText();
-				String pw = inputPw.getText();
+				String pw = new String(inputPw.getPassword());
 				 try {
 			            if(MainController.login(id, pw)) {
 			                new Base();
@@ -145,12 +144,6 @@ public class LoginFrame extends JFrame{
 			        }
 			    }
 			});
-		autoLogin = new JCheckBox("자동 로그인");
-		autoLogin.setOpaque(false);
-		autoLogin.setContentAreaFilled(false);
-		autoLogin.setBorderPainted(false);
-		autoLogin.setMaximumSize(new Dimension(240, 25));
-		
 		inputId.setAlignmentX(Component.CENTER_ALIGNMENT);
 		middle.add(Box.createRigidArea(new Dimension(0, 10)));
 		middle.add(inputId);
@@ -160,9 +153,6 @@ public class LoginFrame extends JFrame{
 		loginVerify.setAlignmentX(Component.CENTER_ALIGNMENT);
 		middle.add(Box.createRigidArea(new Dimension(0, 10)));
 		middle.add(loginVerify);
-		autoLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
-		middle.add(Box.createRigidArea(new Dimension(0, 10)));
-		middle.add(autoLogin);
 
 		this.add(middle, BorderLayout.CENTER);
 		

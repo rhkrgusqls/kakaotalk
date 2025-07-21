@@ -2,11 +2,13 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import controller.MainController;
+import model.TCPManager;
 
 public class ResetPwFrame extends JFrame {
     private JTextField idField;
-    private JTextField pwField;
-    private JTextField newPwField;
+    private JPasswordField pwField;
+    private JPasswordField newPwField;
     private JButton confirmBtn;
     private JButton cancelBtn;
 
@@ -27,9 +29,9 @@ public class ResetPwFrame extends JFrame {
         JLabel idLabel = new JLabel("아이디:");
         idField = new JTextField();
         JLabel pwLabel = new JLabel("현재 비밀번호:");
-        pwField = new JTextField();
+        pwField = new JPasswordField();
         JLabel newPwLabel = new JLabel("새 비밀번호:");
-        newPwField = new JTextField();
+        newPwField = new JPasswordField();
 
         inputPanel.add(idLabel);    inputPanel.add(idField);
         inputPanel.add(pwLabel);    inputPanel.add(pwField);
@@ -49,16 +51,34 @@ public class ResetPwFrame extends JFrame {
 
         confirmBtn.addActionListener(e -> {
             String id = idField.getText().trim();
-            String pw = pwField.getText().trim();
-            String newPw = newPwField.getText().trim();
+            String pw = new String(pwField.getPassword());
+            String newPw = new String(newPwField.getPassword());
+            
             if (id.isEmpty() || pw.isEmpty() || newPw.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "모든 값을 입력하세요.", "입력오류", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // TODO: 실제 비밀번호 변경 로직 구현
-            // 지금은 그냥 값을 다 채우면 "변경완료" 출력 
-            JOptionPane.showMessageDialog(this, "비밀번호가 재설정되었습니다!");
-            dispose();
+            
+            // 서버에 비밀번호 변경 요청 (메시지 형식 수정)
+            String resetMsg = String.format("%%ResetPassword%%&id$%s&currentPassword$%s&newPassword$%s%%", id, pw, newPw);
+            System.out.println("[DEBUG] 비밀번호 재설정 요청: " + resetMsg);
+            String response = TCPManager.getInstance().sendSyncMessage(resetMsg);
+            System.out.println("[DEBUG] 서버 응답: " + response);
+            
+            if (response != null && response.contains("success$true")) {
+                JOptionPane.showMessageDialog(this, "비밀번호가 성공적으로 변경되었습니다!");
+                dispose();
+            } else {
+                String errorMsg = "비밀번호 변경에 실패했습니다.";
+                if (response != null && response.contains("error$")) {
+                    try {
+                        errorMsg = response.split("error\\$")[1].split("&")[0];
+                    } catch (Exception ex) {
+                        errorMsg = "비밀번호 변경 중 오류가 발생했습니다.";
+                    }
+                }
+                JOptionPane.showMessageDialog(this, errorMsg, "오류", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // --- 추가 및 보이기 ---

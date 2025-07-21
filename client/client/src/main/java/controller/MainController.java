@@ -91,15 +91,101 @@ public class MainController implements Observer {
     public void onMessageReceived(String message) {
         System.out.println("[ASYNC] 서버로부터 비동기 메시지 수신: " + message);
 
+        if (message.startsWith("%ChatRoomListUpdated%")) {
+            String userId = parseValue(message, "userId");
+            if (userId != null && userId.equals(getLoggedInUser().getId())) {
+                System.out.println("[DEBUG] 채팅방 목록 업데이트 알림 수신: " + userId);
+                // 로컬 DB에서 사용자별 채팅방 목록을 조회하여 UI 업데이트
+                LocalDBManager db = new LocalDBManager();
+                List<ChatRoom> userRooms = db.loadChatRoomsForUser(userId);
+                System.out.println("[DEBUG] 로컬 DB에서 조회한 채팅방 개수: " + userRooms.size());
+                ServerCallEventHandle.notifyChatRoomListUpdated(userRooms);
+            }
+        }
         if (message.startsWith("%chatListLoad%")) {
             List<ChatRoom> rooms = parseChatListLoad(message);
             LocalDBManager db = new LocalDBManager();
-            for (ChatRoom room : rooms) db.saveOrUpdateChatRoom(room);
-            // UI 새로고침 신호
-            ServerCallEventHandle.notifyChatRoomListUpdated(db.loadChatRooms());
+            User currentUser = getLoggedInUser();
+            if (currentUser != null) {
+                for (ChatRoom room : rooms) {
+                    db.saveOrUpdateChatRoom(room);
+                    // 각 채팅방에 대해 현재 사용자를 멤버로 추가
+                    db.saveChatRoomMember(room.getChatRoomNum(), currentUser.getId());
+                }
+                // 사용자별 채팅방 목록으로 UI 새로고침
+                ServerCallEventHandle.notifyChatRoomListUpdated(db.loadChatRoomsForUser(currentUser.getId()));
+            }
         }
         if (message.startsWith("%Notice%")) {
             String content = parseValue(message, "content");
+        }
+        if (message.startsWith("%FriendAdded%")) {
+            String friendId = parseValue(message, "friendId");
+            String friendName = parseValue(message, "friendName");
+            if (friendId != null && friendName != null) {
+                // 친구 목록 새로고침
+                SwingUtilities.invokeLater(() -> {
+                    view.Base.getInstance().getFriendPanel().refreshFriendList();
+                });
+                JOptionPane.showMessageDialog(null, friendName + "님이 친구로 추가되었습니다!");
+            }
+        }
+        if (message.startsWith("%ChatRoomCreated%")) {
+            // 새로운 채팅방 생성 알림 처리
+            String chatRoomNumStr = parseValue(message, "chatRoomNum");
+            String roomType = parseValue(message, "roomType");
+            String roomName = parseValue(message, "roomName");
+            
+            if (chatRoomNumStr != null && roomType != null && roomName != null) {
+                int chatRoomNum = Integer.parseInt(chatRoomNumStr);
+                System.out.println("[DEBUG] 새 채팅방 생성 알림: " + chatRoomNum + " | " + roomType + " | " + roomName);
+                
+                // 로컬 DB에 채팅방 정보 저장
+                LocalDBManager localDB = new LocalDBManager();
+                User currentUser = getLoggedInUser();
+                if (currentUser != null) {
+                    // 현재 사용자를 채팅방 멤버로 추가
+                    localDB.saveChatRoomMember(chatRoomNum, currentUser.getId());
+                    
+                    // 채팅방 정보 저장
+                    ChatRoom newRoom = new ChatRoom();
+                    newRoom.setChatRoomNum(chatRoomNum);
+                    newRoom.setRoomType(roomType);
+                    newRoom.setRoomName(roomName);
+                    newRoom.setLastMessage("새로운 채팅방이 생성되었습니다.");
+                    localDB.saveOrUpdateChatRoom(newRoom);
+                    
+                    // 채팅방 목록 UI 새로고침
+                    SwingUtilities.invokeLater(() -> {
+                        view.Base.getInstance().getChatRoomPanel().refreshChatRoomList();
+                    });
+                }
+            }
+        }
+        if (message.startsWith("%ChatBroadcast%")) {
+            // 채팅 메시지 브로드캐스트 처리
+            String chatRoomNumStr = parseValue(message, "chatRoomNum");
+            String userId = parseValue(message, "userId");
+            String text = parseValue(message, "text");
+            
+            if (chatRoomNumStr != null && userId != null && text != null) {
+                int chatRoomNum = Integer.parseInt(chatRoomNumStr);
+                System.out.println("[DEBUG] 채팅 메시지 수신: " + chatRoomNum + " | " + userId + " | " + text);
+                
+                // 로컬 DB에 채팅 메시지 저장
+                LocalDBManager localDB = new LocalDBManager();
+                localDB.saveChatMessage(chatRoomNum, userId, text);
+                
+                // 채팅방이 열려있다면 UI 업데이트
+                SwingUtilities.invokeLater(() -> {
+                    view.Base.getInstance().getChatRoomPanel().updateChatWindow(chatRoomNum, userId, text);
+                });
+            }
+        }
+        if (message.startsWith("%FriendListUpdated%")) {
+            SwingUtilities.invokeLater(() -> {
+                view.Base.getInstance().getFriendPanel().refreshFriendList();
+            });
         }
         // 추가적인 메시지 유형 처리 가능
     }
@@ -142,6 +228,10 @@ public class MainController implements Observer {
             String errorMsg = parseValue(response, "error");
             if (errorMsg == null) errorMsg = "존재하지 않는 회원입니다.";
             JOptionPane.showMessageDialog(null, errorMsg);
+            // [추가] 이미 친구일 때도 친구 목록 새로고침
+            SwingUtilities.invokeLater(() -> {
+                view.Base.getInstance().getFriendPanel().refreshFriendList();
+            });
             return false;
         }
     }
@@ -150,7 +240,9 @@ public class MainController implements Observer {
         new Thread(() -> {
             // [추가합니다] 서버에 요청 메시지 전송
             String requestMessage = "%LoadChatRoomData%&id$" + userId + "%";
+            System.out.println("[DEBUG] 채팅방 목록 요청: " + requestMessage);
             String response = tcp.sendSyncMessage(requestMessage);
+            System.out.println("[DEBUG] 서버 응답: " + response);
             
             // [수정합니다] UI 업데이트는 Swing EDT에서 처리
             SwingUtilities.invokeLater(() -> {
@@ -183,9 +275,16 @@ public class MainController implements Observer {
                         if (kv[0].equals("roomType")) room.setRoomType(kv[1]);
                         else if (kv[0].equals("roomName")) room.setRoomName(kv[1]);
                         else if (kv[0].equals("lastMessage")) room.setLastMessage(kv[1]);
+                        else if (kv[0].equals("lastMessageTime")) room.setLastMessageTime(kv[1]);
                     }
                 }
                 rooms.add(room);
+            }
+            // [추가] 서버 목록 기준으로 로컬 DB 동기화
+            LocalDBManager localDB = new LocalDBManager();
+            localDB.deleteAllChatRooms();
+            for (ChatRoom room : rooms) {
+                localDB.saveOrUpdateChatRoom(room);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return rooms;
@@ -269,12 +368,53 @@ public class MainController implements Observer {
                         if (kv[0].equals("roomType")) room.setRoomType(kv[1]);
                         else if (kv[0].equals("roomName")) room.setRoomName(kv[1]);
                         else if (kv[0].equals("lastMessage")) room.setLastMessage(kv[1]);
+                        else if (kv[0].equals("lastMessageTime")) room.setLastMessageTime(kv[1]);
                     }
                 }
                 rooms.add(room);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return rooms;
+    }
+
+    // 친구와 1:1 채팅방 생성 요청 및 오픈
+    public static void createChatRoomWithFriend(String friendId, String friendName) {
+        User me = getLoggedInUser();
+        if (me == null) {
+            JOptionPane.showMessageDialog(null, "로그인 정보가 없습니다.");
+            return;
+        }
+        String myId = me.getId();
+        String roomName = friendName + "와의 1:1 채팅";
+        String msg = String.format("%%CreateChatRoom%%&id$%s&id$%s&name$%s%%", myId, friendId, roomName);
+        System.out.println("[DEBUG] 채팅방 생성 요청: " + msg);
+        String response = tcp.sendSyncMessage(msg);
+        System.out.println("[DEBUG] 서버 응답: " + response);
+        if (response != null && response.startsWith("%CreateChatRoom%") && response.contains("success$true")) {
+            // 서버에서 생성된 채팅방 번호 추출
+            String chatRoomNumStr = parseValue(response, "chatRoomNum");
+            int chatRoomNum = chatRoomNumStr != null ? Integer.parseInt(chatRoomNumStr) : (int)(System.currentTimeMillis() / 1000);
+            
+            // 로컬 DB에 채팅방 정보 저장
+            LocalDBManager localDB = new LocalDBManager();
+            ChatRoom newRoom = new ChatRoom();
+            newRoom.setChatRoomNum(chatRoomNum);
+            newRoom.setRoomType("1:1");
+            newRoom.setRoomName(roomName);
+            newRoom.setLastMessage("최근 메시지");
+            localDB.saveOrUpdateChatRoom(newRoom);
+            localDB.saveChatRoomMember(chatRoomNum, myId);
+            localDB.saveChatRoomMember(chatRoomNum, friendId);
+            
+            // 채팅방 오픈 (UI)
+            view.Base.getInstance().getChatRoomPanel().openChatRoomWindow(chatRoomNum, roomName, "최근 메시지", "./profile/chatRoom/test.jpg");
+            // [추가] 채팅방 목록 즉시 새로고침
+            SwingUtilities.invokeLater(() -> {
+                view.Base.getInstance().getChatRoomPanel().refreshChatRoomList();
+            });
+        } else {
+            JOptionPane.showMessageDialog(null, "채팅방 생성에 실패했습니다.");
+        }
     }
 }
 

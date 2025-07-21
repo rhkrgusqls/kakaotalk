@@ -9,6 +9,8 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class AddChatRoomFrame extends JFrame {
 
@@ -59,11 +61,13 @@ public class AddChatRoomFrame extends JFrame {
 
         JPanel oneToOnePanel = createCreationPanel("1:1");
         JPanel teamPanel = createCreationPanel("팀");
-        JPanel openPanel = createCreationPanel("오픈");
+        // 오픈채팅 패널 제거
+        // JPanel openPanel = createCreationPanel("오픈");
 
         tabbedPane.addTab("1:1", oneToOnePanel);
         tabbedPane.addTab("팀", teamPanel);
-        tabbedPane.addTab("오픈", openPanel);
+        // 오픈채팅 탭 제거
+        // tabbedPane.addTab("오픈", openPanel);
 
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -73,22 +77,33 @@ public class AddChatRoomFrame extends JFrame {
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 체크박스 기능이 있는 친구 목록
-        DefaultListModel<FriendCheckboxItem> friendListModel = new DefaultListModel<>();
+        // 방제목 입력 필드와 라벨 추가
+        JPanel titlePanel = new JPanel(new BorderLayout(5, 5));
+        titlePanel.setBackground(Color.WHITE);
+        JLabel titleLabel = new JLabel("방 제목 :");
+        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+        JTextField titleField = new JTextField();
+        titleField.setFont(new Font("맑은 고딕", Font.PLAIN, 13));
+        titlePanel.add(titleLabel, BorderLayout.WEST);
+        titlePanel.add(titleField, BorderLayout.CENTER);
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
 
-        // =========================================================================
-        // TODO 1: 친구 목록 로딩 (DB 연동)
-        // 현재는 더미 데이터(친구 1~10)를 사용하고 있습니다.
-        // 추후 이 부분을 DB에서 실제 친구 목록을 불러오는 로직으로 변경해야 합니다.
-        // 예를 들어, `List<UserDTO> friends = userDao.getFriendList(currentUserId);` 와 같은 형태가 될 것입니다.
-        // 가져온 친구 목록을 순회하며 `friendListModel.addElement()`를 호출해야 합니다.
-        for (int i = 1; i <= 10; i++) {
-            // UserDTO에서 친구의 이름이나 닉네임을 가져와 FriendCheckboxItem을 생성합니다.
-            // new FriendCheckboxItem("친구 " + i) -> new FriendCheckboxItem(friend.getNickname(), friend.getId())
-            friendListModel.addElement(new FriendCheckboxItem("친구 " + i));
+        // 실제 친구목록 연동
+        DefaultListModel<FriendCheckboxItem> friendListModel = new DefaultListModel<>();
+        java.util.List<String> friendPhones = model.DBManager.getInstance().loadFriendList();
+        for (String phone : friendPhones) {
+            String name = phone;
+            try (java.sql.Connection conn = model.DBManager.getInstance().getConnection();
+                 java.sql.PreparedStatement pstmt = conn.prepareStatement("SELECT name FROM UserData WHERE phoneNum = ? LIMIT 1")) {
+                pstmt.setString(1, phone);
+                java.sql.ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    name = rs.getString("name");
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+            friendListModel.addElement(new FriendCheckboxItem(name + " (" + phone + ")", phone));
         }
-        // =========================================================================
-        
+
         JList<FriendCheckboxItem> friendList = new JList<>(friendListModel);
         friendList.setCellRenderer(new CheckboxListRenderer());
         friendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -101,16 +116,12 @@ public class AddChatRoomFrame extends JFrame {
                 if (index != -1) {
                     FriendCheckboxItem clickedItem = friendListModel.getElementAt(index);
                     boolean isGoingToBeSelected = !clickedItem.isSelected();
-                    // "1:1" 탭이고, 새로운 항목을 "선택"하려는 경우에만
                     if ("1:1".equals(type) && isGoingToBeSelected) {
-                        // 다른 모든 항목을 우선 선택 해제한다.
                         for (int i = 0; i < friendListModel.getSize(); i++) {
                             friendListModel.getElementAt(i).setSelected(false);
                         }
                     }
-                    // 최종적으로 현재 클릭한 아이템의 상태를 토글한다.
                     clickedItem.setSelected(isGoingToBeSelected);
-                    // JList 전체를 다시 그려서 모든 변경사항(해제된 항목 포함)을 반영한다.
                     friendList.repaint();
                 }
             }
@@ -120,8 +131,7 @@ public class AddChatRoomFrame extends JFrame {
         friendScrollPane.setBorder(new TitledBorder("친구 목록 (참여할 친구 선택)"));
         friendScrollPane.getViewport().setBackground(Color.WHITE);
         mainPanel.add(friendScrollPane, BorderLayout.CENTER);
-        
-        // 하단 버튼 (방 생성, 취소)
+
         JPanel bottomButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomButtonPanel.setBackground(Color.WHITE);
         JButton createButton = new JButton("방 생성");
@@ -139,34 +149,83 @@ public class AddChatRoomFrame extends JFrame {
         mainPanel.add(bottomButtonPanel, BorderLayout.SOUTH);
 
         createButton.addActionListener(e -> {
-            List<String> selectedFriendNames = new ArrayList<>();
-            // List<Integer> selectedFriendIds = new ArrayList<>(); // 이름 대신 ID를 수집
+            String roomTitle = titleField.getText().trim();
+            if (roomTitle.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "방 제목을 입력해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            List<String> selectedFriendPhones = new ArrayList<>();
             for (int i = 0; i < friendListModel.getSize(); i++) {
                 FriendCheckboxItem item = friendListModel.getElementAt(i);
                 if (item.isSelected()) {
-                    selectedFriendNames.add(item.getName());
-                    // selectedFriendIds.add(item.getId());
+                    selectedFriendPhones.add(item.getPhoneNum());
                 }
             }
-
-            if (selectedFriendNames.isEmpty()) {
+            if (selectedFriendPhones.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "참여자를 선택해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            // 실제 방 생성(DB 저장)
+            List<model.ChatRoom> existingRooms = model.DBManager.getInstance().loadChatRooms();
+            int maxNum = 0;
+            for (model.ChatRoom r : existingRooms) {
+                if (r.getChatRoomNum() > maxNum) maxNum = r.getChatRoomNum();
+            }
+            model.ChatRoom newRoom = new model.ChatRoom();
+            newRoom.setChatRoomNum(maxNum + 1);
+            newRoom.setRoomType(type);
+            newRoom.setRoomName(roomTitle);
 
-            // =========================================================================
-            // TODO 2: 채팅방 생성 로직 (서버/DB 연동)
-            // 현재는 선택된 친구 목록을 단순히 메시지 박스로 보여주고 창을 닫습니다.
-            // 추후 이 부분을 실제 채팅방 생성 요청을 보내는 로직으로 변경
-            // 1. 선택된 친구들의 정보(ID 리스트 등)와 채팅방 타입(type)을 DTO에 담습니다.
-            // 2. 컨트롤러(또는 서비스)에 해당 DTO를 전달하여 채팅방 생성을 요청
-            // 3. 생성되면 이 창을 닫고(dispose()), 채팅방 목록을 갱신
-            String message = String.format("'%s' 타입의 채팅방을 생성합니다.\n참여자: %s", type, selectedFriendNames.toString());
-            JOptionPane.showMessageDialog(this, message);
+            // 1. 내 로컬 DB에 저장 (새로운 구조 사용)
+            String myId = model.DBManager.getInstance().getLoggedInUser().getId();
+            model.LocalDBManager localDB = new model.LocalDBManager();
+            localDB.saveOrUpdateChatRoom(newRoom);
+            localDB.saveChatRoomMember(newRoom.getChatRoomNum(), myId);
+
+            // 2. 친구들도 로컬 DB에 멤버로 추가
+            for (String friendPhone : selectedFriendPhones) {
+                String friendId = model.DBManager.getInstance().getIdByPhoneNum(friendPhone);
+                if (friendId != null) {
+                    localDB.saveChatRoomMember(newRoom.getChatRoomNum(), friendId);
+                }
+            }
+            // [추가] 서버에 참여자 정보 동기화 요청
+            java.util.List<String> memberIds = new java.util.ArrayList<>();
+            memberIds.add(myId);
+            for (String friendPhone : selectedFriendPhones) {
+                String friendId = model.DBManager.getInstance().getIdByPhoneNum(friendPhone);
+                if (friendId != null) memberIds.add(friendId);
+            }
+            StringBuilder msg = new StringBuilder("%CreateChatRoom%&chatRoomNum$").append(newRoom.getChatRoomNum());
+            for (String id : memberIds) {
+                msg.append("&id$").append(id);
+            }
+            msg.append("%");
+            System.out.println("[DEBUG] 그룹 채팅방 생성 요청: " + msg.toString());
+            String response = model.TCPManager.getInstance().sendSyncMessage(msg.toString());
+            System.out.println("[DEBUG] 서버 응답: " + response);
+            
+            // 채팅방 생성 후 로컬 DB 동기화
+            if (response != null && response.contains("success$true")) {
+                String currentUserId = model.DBManager.getInstance().getLoggedInUser().getId();
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                        // 서버에서 전체 채팅방 목록을 다시 요청하여 로컬 DB 동기화
+                        String syncMsg = "%chatListLoad%&id$" + currentUserId + "%";
+                        String syncResponse = model.TCPManager.getInstance().sendSyncMessage(syncMsg);
+                        if (syncResponse != null && syncResponse.startsWith("%chatListLoad%")) {
+                            controller.MainController.getInstance().onMessageReceived(syncResponse);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }).start();
+            }
+            
+            JOptionPane.showMessageDialog(this, "방이 생성되었습니다!\n방 제목: " + roomTitle);
             dispose();
-            // =========================================================================
         });
-
         cancelButton.addActionListener(e -> dispose());
         return mainPanel;
     }
@@ -174,19 +233,17 @@ public class AddChatRoomFrame extends JFrame {
     // JList 아이템 데이터 모델 클래스
     class FriendCheckboxItem {
         private final String name;
-        // private final int userId; // 예: DB의 사용자 ID
+        private final String phoneNum;
         private boolean selected;
-
-        public FriendCheckboxItem(String name) {
+        public FriendCheckboxItem(String name, String phoneNum) {
             this.name = name;
-            // this.userId = userId;
+            this.phoneNum = phoneNum;
             this.selected = false;
         }
-
         public boolean isSelected() { return selected; }
         public void setSelected(boolean selected) { this.selected = selected; }
         public String getName() { return name; }
-        // public int getId() { return userId; }
+        public String getPhoneNum() { return phoneNum; }
     }
 
     // JList를 체크박스 형태로 보여주는 렌더러 클래스

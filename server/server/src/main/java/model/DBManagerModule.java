@@ -242,16 +242,22 @@ public class DBManagerModule {
     
     public List<ChatRoomData> loadChatRoom(String userId) {
         List<ChatRoomData> list = new ArrayList<>();
-        String sql = "SELECT * FROM ChatRoomList WHERE userId = ?";
+        Set<Integer> seenRoomNums = new HashSet<>();
+        // userId 조건 제거하여 모든 채팅방 조회
+        String sql = "SELECT * FROM ChatRoomList ORDER BY chatRoomNum";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setString(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
+                int roomNum = rs.getInt("chatRoomNum");
+                // 중복된 chatRoomNum은 제거
+                if (seenRoomNums.contains(roomNum)) continue;
+                seenRoomNums.add(roomNum);
+                
                 ChatRoomData room = new ChatRoomData(
-                    rs.getInt("chatRoomNum"),
+                    roomNum,
                     rs.getString("roomType"),
                     rs.getString("roomName")
                 );
@@ -285,7 +291,7 @@ public class DBManagerModule {
     
     public List<ChatData> getChatData(int chatRoomNum) {
         List<ChatData> chatList = new ArrayList<>();
-        String sql = "SELECT * FROM ChatList WHERE chatRoomNum = ? ORDER BY time ASC";
+        String sql = "SELECT chatIndex, chatRoomNum, userId, text, time FROM ChatList WHERE chatRoomNum = ? ORDER BY time ASC";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -297,8 +303,8 @@ public class DBManagerModule {
                 ChatData chat = new ChatData();
                 chat.setChatIndex(rs.getInt("chatIndex"));
                 chat.setChatRoomNum(rs.getInt("chatRoomNum"));
-                chat.setText(rs.getString("text"));
                 chat.setUserId(rs.getString("userId"));
+                chat.setText(rs.getString("text"));
                 chat.setTime(rs.getTimestamp("time"));
                 chatList.add(chat);
             }
@@ -310,7 +316,7 @@ public class DBManagerModule {
         return chatList;
     }
     public boolean insertChatData(int chatRoomNum, String userId, String text) {
-        String sql = "INSERT INTO ChatList (chatRoomNum, userId, text) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO ChatList (chatRoomNum, userId, text, time) VALUES (?, ?, ?, NOW())";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, chatRoomNum);
@@ -331,6 +337,26 @@ public class DBManagerModule {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("text");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public String getLastMessageTimeForRoom(int chatRoomNum) {
+        String sql = "SELECT time FROM ChatList WHERE chatRoomNum = ? ORDER BY time DESC LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, chatRoomNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                java.sql.Timestamp timestamp = rs.getTimestamp("time");
+                if (timestamp != null) {
+                    // 간단한 시간 포맷 (예: "오후 2:30")
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("a h:mm");
+                    return sdf.format(timestamp);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -485,5 +511,79 @@ public class DBManagerModule {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    // id로 사용자 이름을 조회
+    public String getUserNameById(String id) {
+        String sql = "SELECT name FROM UserData WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("name");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // [추가] ChatRoomMember 테이블에 (chatRoomNum, id) 저장
+    public boolean insertChatRoomMember(int chatRoomNum, String userId) {
+        String sql = "INSERT INTO ChatRoomMember (chatRoomNum, id) VALUES (?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, chatRoomNum);
+            stmt.setString(2, userId);
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // 이미 등록된 경우 무시
+            System.out.println("[ChatRoomMember] 이미 등록됨: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // [추가] 채팅방 번호로 참여자 id 목록 반환
+    public List<String> getChatRoomMemberIds(int chatRoomNum) {
+        List<String> memberIds = new ArrayList<>();
+        String sql = "SELECT id FROM ChatRoomMember WHERE chatRoomNum = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, chatRoomNum);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                memberIds.add(rs.getString("id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return memberIds;
+    }
+
+    // 내가 참여자인 채팅방만 반환
+    public List<ChatRoomData> loadChatRoomsForUser(String userId) {
+        List<ChatRoomData> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT c.chatRoomNum, c.roomType, c.roomName FROM ChatRoomList c JOIN ChatRoomMember m ON c.chatRoomNum = m.chatRoomNum WHERE m.id = ? ORDER BY c.chatRoomNum";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ChatRoomData room = new ChatRoomData(
+                    rs.getInt("chatRoomNum"),
+                    rs.getString("roomType"),
+                    rs.getString("roomName")
+                );
+                list.add(room);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

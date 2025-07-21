@@ -5,6 +5,7 @@ public class ChatRoom {
     private String roomType;
     private String roomName;
     private String lastMessage;
+    private String lastMessageTime;
 
     public ChatRoom() {}
 
@@ -39,4 +40,6 @@ public class ChatRoom {
     }
     public String getLastMessage() { return lastMessage; }
     public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
+    public String getLastMessageTime() { return lastMessageTime; }
+    public void setLastMessageTime(String lastMessageTime) { this.lastMessageTime = lastMessageTime; }
 }

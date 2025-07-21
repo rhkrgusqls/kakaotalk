@@ -38,6 +38,18 @@ public class ClientHandler extends Thread {
                 
                 String response = ParsingController.controllerHandle(inputLine);
                 out.println(response+"&uuid$"+uuid);
+
+                // [추가] 로그인 성공 시 UserManager에 등록
+                if (inputLine.startsWith("%Login%") && response.contains("&UserName$") && !response.contains("Error")) {
+                    // id 파싱
+                    String id = extractIdFromLogin(inputLine);
+                    if (id != null) {
+                        UserManager.getInstance().removeUser(this.userId); // 기존 임시 ID 제거
+                        this.userId = id;
+                        UserManager.getInstance().addUser(this.userId, this);
+                        System.out.println("[UserManager] 로그인 성공: " + this.userId + " 등록 완료");
+                    }
+                }
 //                switch (opcode) {
 //                case "Login":
 //                    // --- 테스트를 위한 임시 수정 ---
@@ -111,6 +123,18 @@ public class ClientHandler extends Thread {
         }
 
         return afterUuid.substring(0, cutIdx);
+    }
+
+    // %Login%&id$... 형식에서 id 값 추출
+    private String extractIdFromLogin(String inputLine) {
+        if (inputLine == null) return null;
+        String[] parts = inputLine.split("&");
+        for (String part : parts) {
+            if (part.startsWith("id$")) {
+                return part.substring(3);
+            }
+        }
+        return null;
     }
 
     

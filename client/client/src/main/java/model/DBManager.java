@@ -199,13 +199,17 @@ public class DBManager {
 
     public List<ChatRoom> loadChatRooms() {
         List<ChatRoom> list = new ArrayList<>();
+        Set<Integer> seenRoomNums = new HashSet<>();
         String sql = "SELECT * FROM ChatRoomList";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
+                int roomNum = rs.getInt("chatRoomNum");
+                if (seenRoomNums.contains(roomNum)) continue; // 중복 제거
+                seenRoomNums.add(roomNum);
                 ChatRoom room = new ChatRoom();
-                room.setChatRoomNum(rs.getInt("chatRoomNum"));
+                room.setChatRoomNum(roomNum);
                 room.setRoomType(rs.getString("roomType"));
                 room.setRoomName(rs.getString("roomName"));
                 list.add(room);
@@ -286,6 +290,33 @@ public class DBManager {
     }
 
     public String getCurrentDBName() { return DB_NAME; }
+
+    // phoneNum으로 id 찾기
+    public String getIdByPhoneNum(String phoneNum) {
+        String sql = "SELECT id FROM UserData WHERE phoneNum = ? LIMIT 1";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, phoneNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // id로 DB명 반환 (존재하는 1~8번 DB 중 실제 id가 있는 DB만 반환)
+    public String getDBNameById(String id) {
+        for (int i = 1; i <= 8; i++) {
+            String dbName = "kakaotalkUser" + i + "TestData";
+            if (idExistsInDB(dbName, id)) {
+                return dbName;
+            }
+        }
+        return null;
+    }
 }
 
 
