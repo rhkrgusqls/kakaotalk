@@ -239,6 +239,25 @@ public class DBManagerModule {
         }
     }
 
+    public boolean uploadChat(int chatRoomNum, String text, String userId) {
+        String sql = "INSERT INTO ChatList (chatRoomNum, text, userId) VALUES (?, ?, ?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, chatRoomNum);
+            pstmt.setString(2, text);
+            pstmt.setString(3, userId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     
     public List<ChatRoomData> loadChatRoom(String userId) {
         List<ChatRoomData> list = new ArrayList<>();

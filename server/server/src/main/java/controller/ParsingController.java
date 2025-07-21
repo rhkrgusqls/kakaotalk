@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import observer.ChatGroupManager;
+
 /**
  * ToDo:예외처리할것
  */
@@ -18,6 +20,7 @@ public class ParsingController {
         String[] profileDir;
         String[] phoneNum;
         String[] chatRoomNum;
+        String[] chatData; // ➕ 추가
     }
 
     public static String extractOpcode(String input) {
@@ -66,12 +69,13 @@ public class ParsingController {
         data.profileDir = toArray(tempMap.get("profileDir"));
         data.phoneNum = toArray(tempMap.get("phoneNum"));
         data.chatRoomNum = toArray(tempMap.get("chatRoomNum"));
+        data.chatData = toArray(tempMap.get("chatData")); // ➕ 추가
 
         return data;
     }
 
     private static String[] toArray(List<String> list) {
-        return (list == null || list.isEmpty()) ? new String[0] : list.toArray(new String[0]);
+        return list != null ? list.toArray(new String[0]) : null;
     }
     
     // 중복 정의된 controllerHandle 메서드를 하나로 합침
@@ -93,8 +97,18 @@ public class ParsingController {
                     return "%Error%&message$ID or Password missing%";
                 }
             case "Chat":
-                // Chat은 실시간 전송 후 DB 저장만 하므로, 여기서는 별도의 응답을 주지 않음
-                return ""; // 성공했다는 의미로 ACK(Acknowledge) 응답을 보내거나 빈 문자열 반환
+                int chatRoomNum = Integer.parseInt(data.chatRoomNum[0]);
+                String chatText = data.chatData[0];
+                
+                // 1) DB에 채팅 저장
+                String response = mainController.uploadChat(chatRoomNum, chatText, senderId);
+                
+                // 2) 해당 채팅방 그룹에 리로드 명령 전송
+                String reloadMessage = "%ReloadChatRoom%&chatRoomNum$" + chatRoomNum + "%";
+                ChatGroupManager.getInstance().notifyGroup(String.valueOf(chatRoomNum), reloadMessage);
+                
+                return response; // 클라이언트에 별도 응답 필요 없으면 빈 문자열 반환
+
             case "ADDFRIEND":
                 // myId, targetId 파싱
                 Map<String, String> addFriendMap = extractDataToMap(input);

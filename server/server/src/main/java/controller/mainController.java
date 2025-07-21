@@ -112,6 +112,21 @@ public class mainController {
 	    return builder.toString();
 	}
 	
+	public static String uploadChat(int chatRoomNum, String text, String userId) {
+		 DBManagerModule db = new DBManagerModule();
+		    StringBuilder builder = new StringBuilder();
+		    builder.append("%Chat%");
+		 if(db.uploadChat(chatRoomNum, text, userId)){
+		    builder.append("&result$SUCCESS");
+		    builder.append("%");
+		 }
+		 else{
+			    builder.append("&result$FAIED");
+			    builder.append("%");
+		 }
+		 return builder.toString();
+	}
+	
 	public static String loadChatRoomData(String id) {
         DBManagerModule db = new DBManagerModule();
         // == 매개변수 id를 사용하여 해당 사용자의 채팅방만 가져옵니다.
