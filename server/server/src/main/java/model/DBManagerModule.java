@@ -8,7 +8,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.*;
 public class DBManagerModule {
     
-    private final String DATA_BASE_IP = "34.47.125.114";
+    private final String DATA_BASE_IP = "127.0.0.1";
     private final int DATA_BASE_PORT = 3306;
     private final String DB_NAME = "kakaotalk";
     private final String DB_USER = "root";

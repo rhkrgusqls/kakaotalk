@@ -3,6 +3,8 @@ package model;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+
+import controller.MainController;
 import observer.ServerCallEventHandle;
 
 public class TCPReceiver extends Thread {
@@ -25,6 +27,9 @@ public class TCPReceiver extends Thread {
 					break;
 				}
 				System.out.println("[RECV] " + message);
+				
+				MainController.reloadMessage(message);
+				
 				sender.handleIncomingMessage(message); // UUID 매칭
 				ServerCallEventHandle.notifyObservers(message); // 이벤트 알림
 			} catch (SocketException e) {

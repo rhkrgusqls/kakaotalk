@@ -207,20 +207,28 @@ public class MainController implements Observer {
     }
     
     public static void sendChatMessage(int chatRoomNum, String message) {
-    	User userId = getLoggedInUser();
-    	
-        if (userId.getId() == null || userId.getId().isEmpty()) {
+        User user = getLoggedInUser();
+
+        if (user == null || user.getId() == null || user.getId().isEmpty()) {
             System.err.println("User is not logged in.");
             return;
         }
-	    StringBuilder builder = new StringBuilder();
-        builder.append("%LoadFriendData%");
-        builder.append("&chatRoomNum$").append(chatRoomNum)
+
+        // 메시지 끝에 %가 있으면 모두 제거
+        while (message.endsWith("%")) {
+            message = message.substring(0, message.length() - 1);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("%Chat%")
+               .append("&chatRoomNum$").append(chatRoomNum)
                .append("&chatData$").append(message)
-               .append("%&user$").append(userId.getId());
+               .append("&user$").append(user.getId())
+               .append("%");
 
         tcp.sendMessage(builder.toString());
     }
+
 
     
     public static boolean addFriend(String input) {
@@ -437,5 +445,42 @@ public class MainController implements Observer {
             JOptionPane.showMessageDialog(null, "채팅방 생성에 실패했습니다.");
         }
     }
+
+    public static void reloadMessage(String message) {
+        // opcode 추출
+        String opcode = "";
+        if (message.startsWith("%") && message.contains("%&")) {
+            int start = message.indexOf('%') + 1;
+            int end = message.indexOf("%&");
+            opcode = message.substring(start, end);
+        }
+
+        if (!"Chat".equals(opcode)) {
+            System.out.println("[DEBUG] Chat opcode가 아니므로 처리하지 않음: " + opcode);
+            return;
+        }
+
+        DataParsingModule data = new DataParsingModule();
+        data.parseData(message);
+        String roomNumStr = data.getChatRoomNum();
+        int roomNum = -1;
+        try {
+            roomNum = Integer.parseInt(roomNumStr);
+        } catch (NumberFormatException e) {
+            System.err.println("[ERROR] chatRoomNum이 숫자가 아닙니다: " + roomNumStr);
+            return;
+        }
+
+
+        if (roomNum != -1) {
+            // 서버에 채팅 데이터 요청 → 옵저버 통해 UI 반영됨
+            controller.MainController.requestChatDataFromServer(roomNum);
+            System.out.println("[DEBUG] 채팅방 " + roomNum + " 리프레시 요청됨");
+        } else {
+            System.err.println("[ERROR] chatRoomNum을 파싱할 수 없습니다.");
+        }
+    }
+
+
 }
 

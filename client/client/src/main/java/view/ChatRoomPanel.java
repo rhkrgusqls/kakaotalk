@@ -310,6 +310,16 @@ public class ChatRoomPanel extends JPanel implements Observer{
             chatArea.append(myId + ": " + text + "\n");
             messageInput.setText("");
         });
+        send.addActionListener(e -> {
+            String message = messageInput.getText().trim();
+            if (!message.isEmpty()) {
+                // 서버에 메시지 전송 (메인 컨트롤러에 전송 함수 있어야 함)
+                MainController.sendChatMessage(chatRoomNum, message);
+
+                // 전송 후 입력 필드 초기화
+                messageInput.setText("");
+            }
+        });
         mainContainerPanel.add(title, BorderLayout.NORTH);
         mainContainerPanel.add(chatScrollPane, BorderLayout.CENTER);
         mainContainerPanel.add(sendPanel, BorderLayout.SOUTH);

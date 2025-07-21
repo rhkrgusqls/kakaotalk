@@ -7,7 +7,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ServerTCP {
-    private static final int PORT = 9002;
+    private static final int PORT = 2000;
     private static UserManager userManager = UserManager.getInstance();
     private static int nextConnectionId = 1; // ◀ 접속 순서 ID
 

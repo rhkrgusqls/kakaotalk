@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class TestTCPServer {
     public static void main(String[] args) throws IOException {
-        System.out.println("[메인 서버 시작] 9002 포트에서 대기 중...");
+        System.out.println("[메인 서버 시작] 2000 포트에서 대기 중...");
         try (ServerSocket serverSocket = new ServerSocket(9002)) {
             while (true) {
                 Socket clientSocket = serverSocket.accept();

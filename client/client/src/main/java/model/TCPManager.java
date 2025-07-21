@@ -19,8 +19,8 @@ public class TCPManager {
 	private TCPReceiver receiver;
 
 	private boolean isConnected = false;
-	private final String serverIp = "localhost";
-	private final int serverPort = 9002;
+	private final String serverIp = "34.47.125.114";
+	private final int serverPort = 2000;
 
 	public void connect() {
 		if (isConnected) {

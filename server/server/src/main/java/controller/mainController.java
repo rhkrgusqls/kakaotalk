@@ -119,7 +119,7 @@ public class mainController {
 		    StringBuilder builder = new StringBuilder();
 		    builder.append("%Chat%");
 		 if(db.uploadChat(chatRoomNum, text, userId)){
-		    builder.append("&result$SUCCESS");
+		    builder.append("&chatRoomNum$").append(chatRoomNum);
 		    builder.append("%");
 		 }
 		 else{
