@@ -242,6 +242,17 @@ public class ChatRoomPanel extends JPanel implements Observer{
 	    chatWindow.add(mainContainerPanel);
 	    chatWindow.setVisible(true);
 
+	    send.addActionListener(e -> {
+	        String message = messageInput.getText().trim();
+	        if (!message.isEmpty()) {
+	            // 서버에 메시지 전송 (메인 컨트롤러에 전송 함수 있어야 함)
+	            MainController.sendChatMessage(chatRoomNum, message);
+
+	            // 전송 후 입력 필드 초기화
+	            messageInput.setText("");
+	        }
+	    });
+	    
 	    // splitPane이 화면에 표시된 후 divider 위치를 정확히 중앙으로 설정
 	    SwingUtilities.invokeLater(() -> {
 	        splitPane.setDividerLocation(0.5);

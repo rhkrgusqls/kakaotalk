@@ -36,6 +36,8 @@ public class MainController implements Observer {
         return instance;
     }
 
+
+    
     // 동기 로그인 처리
     public static boolean login(String id, String password) {
         DataParsingModule data = new DataParsingModule();
@@ -86,6 +88,8 @@ public class MainController implements Observer {
         return loggedInUser;
     }
     
+
+    
     // 비동기 메시지를 수신하는 콜백 (Observer 인터페이스 구현)
     @Override
     public void onMessageReceived(String message) {
@@ -115,6 +119,23 @@ public class MainController implements Observer {
         }
         return null;
     }
+    
+    public static void sendChatMessage(int chatRoomNum, String message) {
+    	User userId = getLoggedInUser();
+    	
+        if (userId.getId() == null || userId.getId().isEmpty()) {
+            System.err.println("User is not logged in.");
+            return;
+        }
+	    StringBuilder builder = new StringBuilder();
+        builder.append("%LoadFriendData%");
+        builder.append("&chatRoomNum$").append(chatRoomNum)
+               .append("&chatData$").append(message)
+               .append("%&user$").append(userId.getId());
+
+        tcp.sendMessage(builder.toString());
+    }
+
     
     public static boolean addFriend(String input) {
         // 서버에 ADDFRIEND 요청 (내 id와 친구 입력값 모두 전송)
